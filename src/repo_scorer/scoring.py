@@ -2,8 +2,6 @@
 
 from typing import Dict
 
-from repo_scorer.config import ANSWER_MAPPING, Question
-
 
 def score_question(max_score: float, classification: str) -> float:
     """
@@ -11,13 +9,12 @@ def score_question(max_score: float, classification: str) -> float:
 
     Args:
         max_score: Maximum possible score for the question
-        classification: Answer classification (yes/partial/no/unsure)
+        classification: Answer classification (yes/no)
 
     Returns:
-        Calculated score
+        Calculated score (full points for yes, 0 for no)
     """
-    multiplier = ANSWER_MAPPING.get(classification, 0.0)
-    return max_score * multiplier
+    return max_score if classification == "yes" else 0.0
 
 
 def calculate_final_score(question_scores: Dict[str, float]) -> float:

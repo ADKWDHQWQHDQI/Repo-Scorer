@@ -1,19 +1,14 @@
 """Main orchestrator for repository assessment"""
 
 import asyncio
-from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, Optional
 
 from repo_scorer.services.ollama_service import OllamaService
 from repo_scorer.config import (
     RepositoryTool,
     get_questions_for_tool,
     get_all_questions,
-    get_follow_up_questions,
-    ANSWER_MAPPING,
 )
-from repo_scorer.scoring import score_question, calculate_final_score, generate_breakdown
-from repo_scorer.models import QuestionResult, AssessmentResult
 
 
 class AssessmentOrchestrator:
@@ -23,70 +18,148 @@ class AssessmentOrchestrator:
         self.tool = tool
         self.ollama = OllamaService(model=model)
         self.question_scores: Dict[str, float] = {}
-        self.question_results: List[QuestionResult] = []
-        self.current_question_index = 0
-        self.pending_follow_ups: List[tuple] = []  # Queue of follow-up questions
-        self.importance_weights_assigned = False
+        self.scored_questions: set = set()  # Track which questions have been scored
         
         # Load predefined questions for the selected tool
         self.pillars = get_questions_for_tool(tool)
         self.questions = get_all_questions(self.pillars)
-
-    async def assign_importance_weights(self) -> None:
+    
+    async def score_question_importance(self, question_id: str) -> float:
         """
-        Use LLM to assign importance weights to all questions
+        Score importance for a single question on-demand with detailed logging
         
-        This evaluates each question and assigns a weight (1-10) based on
-        how critical that governance practice is for repository health.
-        Then redistributes the 100 points proportionally based on importance.
+        Args:
+            question_id: ID of the question to score
+            
+        Returns:
+            Importance score (1-10)
         """
-        if self.importance_weights_assigned:
-            return
+        # Check if already scored
+        if question_id in self.scored_questions:
+            # Find the question to get its current importance
+            for pillar_id, pillar in self.pillars.items():
+                for question in pillar.questions:
+                    if question.id == question_id:
+                        print(f"   ℹ️  Using cached importance score: {question.importance}/10")
+                        return question.importance
         
-        print("\n🤖 AI is evaluating question importance...")
-        
-        # Score all questions in parallel for efficiency
-        all_questions_flat = []
+        # Find the question
+        question_obj = None
         for pillar_id, pillar in self.pillars.items():
             for question in pillar.questions:
-                all_questions_flat.append((pillar_id, question))
+                if question.id == question_id:
+                    question_obj = question
+                    break
+            if question_obj:
+                break
         
-        # Score questions (with some batching to avoid overwhelming the LLM)
-        importance_tasks = [
-            self.ollama.score_question_importance(q.text)
-            for _, q in all_questions_flat
-        ]
+        if not question_obj:
+            print(f"   ⚠️  Question {question_id} not found")
+            return 6.0
         
-        importances = await asyncio.gather(*importance_tasks)
+        print(f"\n🔍 Scoring Question Importance...")
+        print(f"   Question: {question_obj.text[:80]}..." if len(question_obj.text) > 80 else f"   Question: {question_obj.text}")
+        print(f"   Current max score: {question_obj.max_score} points")
         
-        # Assign importance scores to questions
-        for (pillar_id, question), importance in zip(all_questions_flat, importances):
-            question.importance = importance
+        # Default score based on question position (varied distribution)
+        default_scores = [7.0, 8.0, 6.0, 9.0, 5.0, 7.5, 6.5, 8.5, 4.0, 7.0, 6.0, 8.0, 5.5, 7.5, 6.5]
+        question_index = len(self.scored_questions)
+        default_score = default_scores[question_index] if question_index < len(default_scores) else 6.0
         
-        # Recalculate max_scores based on importance weights
+        # Score with LLM
+        importance = await self.ollama.score_question_importance(
+            question_obj.text, 
+            default_score=default_score
+        )
+        
+        # Update the question's importance
+        question_obj.importance = importance
+        
+        # Mark as scored
+        self.scored_questions.add(question_id)
+        
+        # IMMEDIATELY recalculate max_scores for all questions based on current importance values
+        # This ensures the display always shows LLM-calculated weights, not hardcoded values
+        self._recalculate_max_scores()
+        
+        print(f"   ✅ Importance Score: {importance}/10")
+        print(f"   Updated max score: {question_obj.max_score:.2f} points\n")
+        
+        return importance
+    
+    def _recalculate_max_scores(self) -> None:
+        """
+        Recalculate max_scores for all questions based on their importance weights.
+        This is called after each question importance is scored to keep distribution current.
+        
+        For questions not yet scored:
+        - If no questions scored yet: use equal distribution (100/total)
+        - If some scored: unscored questions get average importance of scored ones
+        """
+        all_questions = []
+        scored_questions = []
+        unscored_questions = []
+        
+        # Collect questions and categorize by scoring status
         for pillar_id, pillar in self.pillars.items():
-            total_importance = sum(q.importance for q in pillar.questions)
-            
-            # Redistribute pillar's total weight (100 points) based on importance
             for question in pillar.questions:
-                # Weight proportional to importance
-                question.max_score = round(
-                    (question.importance / total_importance) * pillar.total_weight, 2
-                )
+                all_questions.append(question)
+                if question.id in self.scored_questions:
+                    scored_questions.append(question)
+                else:
+                    unscored_questions.append(question)
+        
+        if not scored_questions:
+            # No questions scored yet - use equal distribution
+            points_per_question = 100.0 / len(all_questions)
+            for question in all_questions:
+                question.max_score = points_per_question
+        else:
+            # Some questions are scored
+            # For unscored questions, estimate importance as average of scored questions
+            avg_importance = sum(q.importance for q in scored_questions) / len(scored_questions)
+            for question in unscored_questions:
+                question.importance = avg_importance
             
-            # Adjust last question to ensure total is exactly pillar.total_weight
-            actual_total = sum(q.max_score for q in pillar.questions)
-            if abs(actual_total - pillar.total_weight) > 0.01:
-                pillar.questions[-1].max_score = round(
-                    pillar.questions[-1].max_score + (pillar.total_weight - actual_total), 2
-                )
+            # Now distribute 100 points proportionally based on all importance values
+            total_importance = sum(q.importance for q in all_questions)
+            
+            if total_importance > 0:
+                for question in all_questions:
+                    question.max_score = (question.importance / total_importance) * 100.0
+            else:
+                # Fallback: equal distribution
+                points_per_question = 100.0 / len(all_questions)
+                for question in all_questions:
+                    question.max_score = points_per_question
         
         # Refresh questions list
         self.questions = get_all_questions(self.pillars)
-        self.importance_weights_assigned = True
         
-        print("✓ Question importance weights assigned\n")
+        print(f"   📊 Recalculated scores - {len(scored_questions)}/{len(all_questions)} questions scored")
     
+    def normalize_question_scores(self) -> None:
+        """
+        Final normalization of question max_scores (called at assessment completion).
+        By this point, all questions should have their importance scored.
+        """
+        # Just call the internal recalculation method
+        self._recalculate_max_scores()
+        
+        # Collect all questions for summary
+        all_questions = []
+        total_importance = 0.0
+        
+        for pillar_id, pillar in self.pillars.items():
+            for question in pillar.questions:
+                all_questions.append(question)
+                total_importance += question.importance
+        
+        print("\n📊 Final Score Normalization Complete")
+        print(f"   Total importance: {total_importance:.2f}")
+        print(f"   Points distributed: 100.0")
+        print(f"   Questions: {len(all_questions)}\n")
+
     async def check_readiness(self) -> tuple[bool, str]:
         """
         Check if system is ready to run assessment
@@ -105,198 +178,5 @@ class AssessmentOrchestrator:
                 f"Model '{self.ollama.model}' not found. Run: ollama pull {self.ollama.model}",
             )
         
-        # Assign importance weights to questions using LLM
-        if not self.importance_weights_assigned:
-            await self.assign_importance_weights()
-
+        print("\n✅ System ready - questions will be scored as you progress through the assessment\n")
         return True, "System ready"
-
-    async def process_answer(
-        self, question_id: str, user_answer: str
-    ) -> QuestionResult:
-        """
-        Process a single answer
-
-        Args:
-            question_id: ID of the question
-            user_answer: User's natural language answer
-
-        Returns:
-            QuestionResult with classification and score
-        """
-        # Find the question
-        question_data = None
-        pillar_id = None
-        pillar_name = None
-        is_follow_up = "_followup_" in question_id
-
-        # First check in base questions
-        for pid, q, pname in self.questions:
-            if q.id == question_id:
-                question_data = q
-                pillar_id = pid
-                pillar_name = pname
-                break
-
-        # If not found and it's a follow-up, check pending follow-ups
-        if not question_data and is_follow_up:
-            for pid, fq, pname in self.pending_follow_ups:
-                if fq.id == question_id:
-                    # Convert FollowUpQuestion to Question for processing
-                    from repo_scorer.config import Question
-                    question_data = Question(
-                        id=fq.id,
-                        text=fq.text,
-                        max_score=fq.max_score
-                    )
-                    pillar_id = pid
-                    pillar_name = pname
-                    break
-        
-        # Also check if it's a follow-up that was already processed (in pending but being processed now)
-        if not question_data and is_follow_up:
-            # Check all possible follow-up questions from config
-            base_question_id = question_id.split("_followup_")[0]
-            classification = None  # We don't know the classification yet
-            
-            # Get all potential follow-ups for the base question
-            all_follow_ups = get_follow_up_questions(base_question_id, "partial")  # Check partial
-            all_follow_ups.extend(get_follow_up_questions(base_question_id, "no"))  # Check no
-            
-            for fq in all_follow_ups:
-                if fq.id == question_id:
-                    from repo_scorer.config import Question
-                    question_data = Question(
-                        id=fq.id,
-                        text=fq.text,
-                        max_score=fq.max_score
-                    )
-                    # Find the pillar from the base question
-                    base_question_id = fq.base_question_id
-                    for pid, q, pname in self.questions:
-                        if q.id == base_question_id:
-                            pillar_id = pid
-                            pillar_name = pname
-                            break
-                    break
-
-        if not question_data:
-            raise ValueError(f"Question {question_id} not found")
-
-        # Classify answer using LLM
-        classification = await self.ollama.classify_answer(
-            question_data.text, user_answer
-        )
-
-        # Calculate score deterministically
-        earned_score = score_question(question_data.max_score, classification)
-
-        # Store score
-        self.question_scores[question_id] = earned_score
-
-        # Create result
-        result = QuestionResult(
-            question_id=question_id,
-            question_text=question_data.text,
-            user_answer=user_answer,
-            classification=classification,
-            score_earned=round(earned_score, 2),
-            max_score=question_data.max_score,
-            is_follow_up=is_follow_up,
-            base_question_id=question_id.split("_followup_")[0] if is_follow_up else None,
-        )
-
-        self.question_results.append(result)
-        
-        # AI-driven adaptive questioning: Check if follow-up questions should be triggered
-        if not is_follow_up:  # Only trigger follow-ups for base questions
-            follow_ups = get_follow_up_questions(question_id, classification)
-            
-            for follow_up in follow_ups:
-                # AI decides if this follow-up is relevant
-                should_ask = await self.ollama.decide_follow_up(
-                    question_data.text,
-                    user_answer,
-                    classification,
-                    follow_up.text
-                )
-                
-                if should_ask:
-                    # Add to pending follow-ups queue
-                    self.pending_follow_ups.append((pillar_id, follow_up, pillar_name))
-        
-        return result
-
-    async def run_full_assessment(
-        self, answers: Dict[str, str]
-    ) -> AssessmentResult:
-        """
-        Run full assessment with all answers at once
-
-        Args:
-            answers: Dictionary of question_id -> user_answer
-
-        Returns:
-            Complete assessment result
-        """
-        # Process all answers
-        for question_id, user_answer in answers.items():
-            await self.process_answer(question_id, user_answer)
-
-        return await self.finalize_assessment()
-
-    async def finalize_assessment(self) -> AssessmentResult:
-        """
-        Finalize assessment and generate results
-
-        Returns:
-            Complete assessment result with summary
-        """
-        # Calculate final score
-        final_score = calculate_final_score(self.question_scores)
-
-        # Generate pillar breakdown with pillar names and max scores
-        pillar_questions = {
-            pillar.name: [(q.id, q.max_score) for q in pillar.questions]
-            for pillar in self.pillars.values()
-        }
-        breakdown = generate_breakdown(self.question_scores, pillar_questions)
-
-        # Generate AI summary
-        summary = await self.ollama.generate_summary(
-            final_score, breakdown, self.question_results
-        )
-
-        return AssessmentResult(
-            final_score=round(final_score, 2),
-            breakdown=breakdown,
-            question_results=self.question_results,
-            summary=summary,
-        )
-
-    def get_next_question(self) -> Optional[tuple]:
-        """
-        Get next question in sequence (adaptive: prioritizes follow-ups)
-
-        Returns:
-            (pillar_id, question, pillar_name) or None if complete
-        """
-        # Prioritize pending follow-ups (adaptive questioning)
-        if self.pending_follow_ups:
-            return self.pending_follow_ups.pop(0)
-        
-        # Otherwise, continue with base questions
-        if self.current_question_index >= len(self.questions):
-            return None
-
-        question_tuple = self.questions[self.current_question_index]
-        self.current_question_index += 1
-        return question_tuple
-
-    def reset(self):
-        """Reset orchestrator for new assessment"""
-        self.question_scores = {}
-        self.question_results = []
-        self.current_question_index = 0
-        self.pending_follow_ups = []
-        # Note: We keep importance_weights_assigned=True to avoid re-scoring on reset

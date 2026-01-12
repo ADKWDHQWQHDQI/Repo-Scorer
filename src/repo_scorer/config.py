@@ -29,95 +29,38 @@ class Pillar:
     questions: List[Question]
 
 
-@dataclass
-class FollowUpQuestion:
-    """Follow-up question triggered conditionally"""
-    id: str
-    text: str
-    max_score: float
-    trigger_classifications: List[str]  # e.g., ["partial", "no"]
-    base_question_id: str  # ID of the question that triggers this
-
-
-# Answer classification mappings
-ANSWER_MAPPING = {
-    "yes": 1.0,
-    "partial": 0.5,
-    "no": 0.0,
-    "unsure": 0.25,
-}
-
-# System prompt for Ollama
-SYSTEM_PROMPT = """You are a software governance assessor.
-Interpret user answers as: yes, partial, no, or unsure.
-Do not calculate scores.
-Do not explain scoring unless asked.
-Be concise."""
-
-# Classification prompt template
-CLASSIFICATION_PROMPT = """Question:
-"{question}"
-
-User answer:
-"{answer}"
-
-Classify the answer into ONE category:
-
-YES - Affirmative responses:
-  Examples: yes, yeah, yep, definitely, absolutely, correct, true, implemented, we have it
-
-PARTIAL - Partially implemented or conditional:
-  Examples: partially, somewhat, kinda, sort of, maybe, sometimes, mostly, "yes but...", "working on it", "depends", "some teams do"
-
-NO - Negative responses or not implemented:
-  Examples: no, nope, not yet, haven't, don't have, not implemented, removed, "used to but not anymore"
-
-UNSURE - Uncertain or don't know:
-  Examples: idk, don't know, not sure, unsure, dunno, unclear, "...", "hmm", no clear answer
-
-Return ONLY one word: yes, partial, no, or unsure"""
-
-# Follow-up decision prompt for adaptive questioning
-FOLLOW_UP_DECISION_PROMPT = """Based on the user's answer to the previous question, decide if a follow-up question would provide valuable clarification.
-
-Original Question:
-"{original_question}"
-
-User's Answer:
-"{user_answer}"
-
-Classification: {classification}
-
-Proposed Follow-up Question:
-"{follow_up_question}"
-
-Should this follow-up be asked? Consider:
-- If answer was clear and complete, skip follow-up
-- If answer was vague or partial, follow-up adds value
-- If user already addressed the follow-up topic, skip it
-
-Respond with ONLY: yes or no"""
-
 # Question importance scoring prompt
-QUESTION_IMPORTANCE_PROMPT = """You are evaluating the importance of repository governance practices.
+QUESTION_IMPORTANCE_PROMPT = """You are evaluating the importance of repository governance practices. Your task is to DIFFERENTIATE between practices - not all practices are equally important.
 
 Question:
 "{question}"
 
-Rate the importance of this practice for a well-governed repository on a scale of 1-10, where:
-- 1-3: Nice to have, minor impact on repository health
-- 4-6: Important, contributes to better practices
-- 7-8: Very important, significant impact on security, quality, or collaboration
-- 9-10: Critical, fundamental to repository governance and team productivity
+Rate the importance of this practice for a well-governed repository on a scale of 1-10:
 
-Consider:
-- Security implications
-- Team collaboration impact
-- Code quality effects
-- Scalability and maintainability
-- Risk of not having this practice
+CRITICAL FOUNDATION (9-10):
+- Security vulnerabilities that could lead to breaches
+- Practices that prevent production incidents
+- Access control and authentication fundamentals
+- Example: Branch protection, code review requirements
 
-Respond with ONLY a number from 1 to 10."""
+HIGH IMPACT (7-8):
+- Significantly improves code quality or team velocity
+- Prevents common mistakes and rework
+- Example: Automated testing, CODEOWNERS
+
+MODERATE IMPACT (4-6):
+- Good practices that help but aren't critical
+- Process improvements with measurable benefits
+- Example: PR templates, commit conventions
+
+NICE TO HAVE (1-3):
+- Minor conveniences or optimizations
+- Practices with limited impact on outcomes
+- Example: Aesthetic preferences, optional tooling
+
+IMPORTANT: Be critical and specific. Most practices should NOT be 9-10. Reserve high scores for truly critical items.
+
+Respond with ONLY a single number from 1 to 10."""
 
 
 # GitHub Questions (15 questions, ~6.67 points each)
@@ -226,62 +169,6 @@ def get_questions_for_tool(tool: RepositoryTool) -> Dict[str, Pillar]:
     return pillars
 
 
-# Follow-up questions configuration (GitHub example - expand for other tools)
-# Maps base question ID -> list of follow-up questions
-FOLLOW_UP_QUESTIONS = {
-    # CI/CD related follow-up
-    "github_9": [
-        FollowUpQuestion(
-            id="github_9_followup_1",
-            text="Does the pipeline run automatically on all pull requests before merge?",
-            max_score=2.0,
-            trigger_classifications=["partial"],
-            base_question_id="github_9"
-        )
-    ],
-    # Branch protection follow-up
-    "github_2": [
-        FollowUpQuestion(
-            id="github_2_followup_1",
-            text="Are these protections enforced consistently across all critical branches (main, develop, release)?",
-            max_score=2.0,
-            trigger_classifications=["partial"],
-            base_question_id="github_2"
-        )
-    ],
-    # Secret scanning follow-up
-    "github_6": [
-        FollowUpQuestion(
-            id="github_6_followup_1",
-            text="Are developers notified immediately when secrets are detected, and is remediation tracked?",
-            max_score=2.0,
-            trigger_classifications=["partial", "no"],
-            base_question_id="github_6"
-        )
-    ],
-    # Repository structure follow-up
-    "github_8": [
-        FollowUpQuestion(
-            id="github_8_followup_1",
-            text="Is the naming convention documented and enforced through automation or policies?",
-            max_score=2.0,
-            trigger_classifications=["partial"],
-            base_question_id="github_8"
-        )
-    ],
-    # Security alerts follow-up
-    "github_14": [
-        FollowUpQuestion(
-            id="github_14_followup_1",
-            text="What is the average time to remediate critical security alerts in your repositories?",
-            max_score=2.0,
-            trigger_classifications=["partial"],
-            base_question_id="github_14"
-        )
-    ],
-}
-
-
 def get_all_questions(pillars: Dict[str, Pillar]) -> List[tuple[str, Question, str]]:
     """Get all questions with their pillar context"""
     questions = []
@@ -289,13 +176,4 @@ def get_all_questions(pillars: Dict[str, Pillar]) -> List[tuple[str, Question, s
         for question in pillar.questions:
             questions.append((pillar_id, question, pillar.name))
     return questions
-
-
-def get_follow_up_questions(base_question_id: str, classification: str) -> List[FollowUpQuestion]:
-    """Get applicable follow-up questions based on classification"""
-    follow_ups = FOLLOW_UP_QUESTIONS.get(base_question_id, [])
-    return [
-        fq for fq in follow_ups
-        if classification in fq.trigger_classifications
-    ]
 
