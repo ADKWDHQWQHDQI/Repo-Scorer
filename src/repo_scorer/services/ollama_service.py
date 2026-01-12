@@ -12,7 +12,7 @@ except ImportError:
         "ollama package not found. Please install: pip install ollama"
     )
 
-from repo_scorer.config import SYSTEM_PROMPT, CLASSIFICATION_PROMPT, FOLLOW_UP_DECISION_PROMPT
+from repo_scorer.config import SYSTEM_PROMPT, CLASSIFICATION_PROMPT, FOLLOW_UP_DECISION_PROMPT, QUESTION_IMPORTANCE_PROMPT
 
 # Load environment variables
 load_dotenv()
@@ -228,6 +228,55 @@ class OllamaService:
             # Fallback: ask follow-up for partial/no classifications
             return classification in ["partial", "no"]
 
+    async def score_question_importance(self, question_text: str) -> float:
+        """
+        Score the importance of a question using LLM
+        
+        The LLM evaluates how critical this governance practice is for
+        repository health, security, and team productivity.
+        
+        Args:
+            question_text: The question to evaluate
+            
+        Returns:
+            Importance score from 1.0 to 10.0
+        """
+        prompt = QUESTION_IMPORTANCE_PROMPT.format(question=question_text)
+        
+        try:
+            response = await asyncio.wait_for(
+                self.client.generate(
+                    model=self.model,
+                    prompt=prompt,
+                    system="You are an expert in software engineering governance and best practices.",
+                    stream=False,
+                    options={
+                        "temperature": 0.3,  # Some variation but generally consistent
+                        "num_predict": 5,    # Just need a number
+                    },
+                ),
+                timeout=10,
+            )
+            
+            # Extract the number from response
+            importance_text = response["response"].strip()
+            
+            # Try to extract first number found
+            import re
+            numbers = re.findall(r'\b([1-9]|10)\b', importance_text)
+            if numbers:
+                importance = float(numbers[0])
+                # Ensure it's in valid range
+                return max(1.0, min(10.0, importance))
+            
+            # Fallback: default to medium importance
+            return 5.0
+            
+        except Exception as e:
+            print(f"Error scoring question importance: {e}")
+            # Fallback: default to medium importance
+            return 5.0
+    
     async def generate_summary(
         self, final_score: float, breakdown: dict, question_results: list
     ) -> str:

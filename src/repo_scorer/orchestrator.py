@@ -26,11 +26,67 @@ class AssessmentOrchestrator:
         self.question_results: List[QuestionResult] = []
         self.current_question_index = 0
         self.pending_follow_ups: List[tuple] = []  # Queue of follow-up questions
+        self.importance_weights_assigned = False
         
         # Load predefined questions for the selected tool
         self.pillars = get_questions_for_tool(tool)
         self.questions = get_all_questions(self.pillars)
 
+    async def assign_importance_weights(self) -> None:
+        """
+        Use LLM to assign importance weights to all questions
+        
+        This evaluates each question and assigns a weight (1-10) based on
+        how critical that governance practice is for repository health.
+        Then redistributes the 100 points proportionally based on importance.
+        """
+        if self.importance_weights_assigned:
+            return
+        
+        print("\n🤖 AI is evaluating question importance...")
+        
+        # Score all questions in parallel for efficiency
+        all_questions_flat = []
+        for pillar_id, pillar in self.pillars.items():
+            for question in pillar.questions:
+                all_questions_flat.append((pillar_id, question))
+        
+        # Score questions (with some batching to avoid overwhelming the LLM)
+        importance_tasks = [
+            self.ollama.score_question_importance(q.text)
+            for _, q in all_questions_flat
+        ]
+        
+        importances = await asyncio.gather(*importance_tasks)
+        
+        # Assign importance scores to questions
+        for (pillar_id, question), importance in zip(all_questions_flat, importances):
+            question.importance = importance
+        
+        # Recalculate max_scores based on importance weights
+        for pillar_id, pillar in self.pillars.items():
+            total_importance = sum(q.importance for q in pillar.questions)
+            
+            # Redistribute pillar's total weight (100 points) based on importance
+            for question in pillar.questions:
+                # Weight proportional to importance
+                question.max_score = round(
+                    (question.importance / total_importance) * pillar.total_weight, 2
+                )
+            
+            # Adjust last question to ensure total is exactly pillar.total_weight
+            actual_total = sum(q.max_score for q in pillar.questions)
+            if abs(actual_total - pillar.total_weight) > 0.01:
+                pillar.questions[-1].max_score = round(
+                    pillar.questions[-1].max_score + (pillar.total_weight - actual_total), 2
+                )
+        
+        # Refresh questions list
+        self.questions = get_all_questions(self.pillars)
+        self.importance_weights_assigned = True
+        
+        print("✓ Question importance weights assigned\n")
+    
     async def check_readiness(self) -> tuple[bool, str]:
         """
         Check if system is ready to run assessment
@@ -48,6 +104,10 @@ class AssessmentOrchestrator:
                 False,
                 f"Model '{self.ollama.model}' not found. Run: ollama pull {self.ollama.model}",
             )
+        
+        # Assign importance weights to questions using LLM
+        if not self.importance_weights_assigned:
+            await self.assign_importance_weights()
 
         return True, "System ready"
 
@@ -239,3 +299,4 @@ class AssessmentOrchestrator:
         self.question_results = []
         self.current_question_index = 0
         self.pending_follow_ups = []
+        # Note: We keep importance_weights_assigned=True to avoid re-scoring on reset

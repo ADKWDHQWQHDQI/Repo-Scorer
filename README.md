@@ -16,6 +16,17 @@ The tool features **adaptive questioning** where AI dynamically decides what to 
 
 This is **true agent-like behavior** - AI controls the conversation flow, not just classification.
 
+### 🎯 AI-Powered Question Importance Weighting
+
+**NEW:** The LLM intelligently evaluates and weights each question based on its importance:
+
+- **Dynamic Weight Assignment**: When questions are loaded, the AI examines each one and assigns an importance score (1-10)
+- **Critical practices get higher scores**: Security, branch protection, and CI/CD enforcement are weighted more heavily
+- **Fair scoring**: Points are redistributed based on actual impact on repository health
+- **Visible in CLI**: Each question shows its importance rating (⭐⭐⭐⭐⭐) and weighted score
+
+This ensures that critical governance practices contribute more to your final score than minor improvements.
+
 📖 **Learn more**: See [ADAPTIVE_QUESTIONING_ENHANCEMENT.md](ADAPTIVE_QUESTIONING_ENHANCEMENT.md) and [VISUAL_FLOW.md](VISUAL_FLOW.md)
 
 ## Architecture

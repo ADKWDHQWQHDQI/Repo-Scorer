@@ -18,6 +18,7 @@ class Question:
     id: str
     text: str
     max_score: float
+    importance: float = 5.0  # Default importance, will be set by LLM (1-10 scale)
 
 
 @dataclass
@@ -96,6 +97,27 @@ Should this follow-up be asked? Consider:
 - If user already addressed the follow-up topic, skip it
 
 Respond with ONLY: yes or no"""
+
+# Question importance scoring prompt
+QUESTION_IMPORTANCE_PROMPT = """You are evaluating the importance of repository governance practices.
+
+Question:
+"{question}"
+
+Rate the importance of this practice for a well-governed repository on a scale of 1-10, where:
+- 1-3: Nice to have, minor impact on repository health
+- 4-6: Important, contributes to better practices
+- 7-8: Very important, significant impact on security, quality, or collaboration
+- 9-10: Critical, fundamental to repository governance and team productivity
+
+Consider:
+- Security implications
+- Team collaboration impact
+- Code quality effects
+- Scalability and maintainability
+- Risk of not having this practice
+
+Respond with ONLY a number from 1 to 10."""
 
 
 # GitHub Questions (15 questions, ~6.67 points each)

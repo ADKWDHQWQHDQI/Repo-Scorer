@@ -113,7 +113,10 @@ async def run_interactive_assessment(model: Optional[str] = None):
         # Display progress
         print(f"{Colors.BOLD}{Colors.HEADER}[{question_count}/{total_questions}] {pillar_name}{Colors.END}")
         print(f"{Colors.BOLD}Q: {question.text}{Colors.END}")
-        print(f"   (Max score: {question.max_score} points)")
+        
+        # Show importance and max score
+        importance_label = "⭐" * min(int(question.importance / 2), 5)  # Visual importance indicator
+        print(f"   (Importance: {importance_label} {question.importance:.1f}/10 | Max score: {question.max_score} points)")
 
         # Get user answer
         user_answer = input(f"\n{Colors.CYAN}Your answer: {Colors.END}").strip()
