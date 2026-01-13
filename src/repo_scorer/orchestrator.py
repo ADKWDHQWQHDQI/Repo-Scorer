@@ -3,7 +3,7 @@
 import asyncio
 from typing import Dict, Optional
 
-from repo_scorer.services.ollama_service import OllamaService
+from repo_scorer.services.azure_openai_service import AzureOpenAIService
 from repo_scorer.config import (
     RepositoryTool,
     get_questions_for_tool,
@@ -14,9 +14,9 @@ from repo_scorer.config import (
 class AssessmentOrchestrator:
     """Orchestrates the assessment flow"""
 
-    def __init__(self, tool: RepositoryTool, model: Optional[str] = None):
+    def __init__(self, tool: RepositoryTool, api_key: Optional[str] = None):
         self.tool = tool
-        self.ollama = OllamaService(model=model)
+        self.ai_service = AzureOpenAIService(api_key=api_key)
         self.question_scores: Dict[str, float] = {}
         self.answer_analyses: Dict[str, str] = {}  # Store LLM analysis for each answer
         
@@ -64,7 +64,7 @@ class AssessmentOrchestrator:
         Returns:
             LLM analysis of the answer
         """
-        analysis = await self.ollama.analyze_answer(question_text, answer, importance)
+        analysis = await self.ai_service.analyze_answer(question_text, answer, importance)
         self.answer_analyses[question_id] = analysis
         return analysis
     
@@ -107,15 +107,11 @@ class AssessmentOrchestrator:
         # Calculate final score
         final_score = sum(self.question_scores.values())
         
-        # Get tool name
-        tool_name = self.tool.value.replace("_", " ").title()
-        
-        # Generate summary
-        summary = await self.ollama.generate_final_summary(
-            tool_name=tool_name,
+        # Generate summary using Azure OpenAI
+        summary = await self.ai_service.generate_comprehensive_summary(
             yes_answers=yes_answers,
             no_answers=no_answers,
-            final_score=final_score
+            total_score=final_score
         )
         
         return summary
@@ -127,16 +123,16 @@ class AssessmentOrchestrator:
         Returns:
             (is_ready, message)
         """
-        ollama_connected, model_available = await self.ollama.check_health()
+        service_connected, deployment_available = await self.ai_service.check_health()
 
-        if not ollama_connected:
-            return False, "Cannot connect to Ollama. Is it running?"
+        if not service_connected:
+            return False, "Cannot connect to Azure OpenAI service."
 
-        if not model_available:
+        if not deployment_available:
             return (
                 False,
-                f"Model '{self.ollama.model}' not found. Run: ollama pull {self.ollama.model}",
+                f"Azure OpenAI deployment '{self.ai_service.deployment}' not accessible.",
             )
         
-        print("\n✅ System ready - questions use predefined importance scores\n")
-        return True, "System ready"
+        print("\n✅ System ready - Azure OpenAI connected\n")
+        return True, "Azure OpenAI service ready"

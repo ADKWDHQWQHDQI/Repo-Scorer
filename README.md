@@ -1,22 +1,21 @@
 # Repository Scorer
 
-> An intelligent repository quality assessment tool with professional web interface, powered by local LLM (Ollama)
+> An intelligent repository quality assessment tool with professional web interface, powered by Azure OpenAI
 
 ## Overview
 
-A modern **Streamlit web application** that conducts intelligent repository assessments using local LLM (Ollama). The application interprets user answers in real-time, applies weighted scoring, and produces a comprehensive quality score out of 100.
+A modern **Streamlit web application** that conducts intelligent repository assessments using Azure OpenAI (GPT-4). The application interprets user answers in real-time, applies weighted scoring based on importance, and produces a comprehensive quality score out of 100.
 
-### AI-Powered Question Importance Weighting
+### Manual Question Importance Weighting
 
-**NEW:** The LLM intelligently evaluates and weights each question based on its importance:
+Questions are **manually weighted by importance** to reflect their real-world impact on repository quality:
 
-- **On-Demand Scoring**: Each question is scored right before it's displayed to you
-- **Critical practices get higher scores**: Security, branch protection, and CI/CD enforcement are weighted more heavily
-- **Fair scoring**: Points are redistributed based on actual impact on repository health
-- **Visible in Results**: Detailed breakdown shows importance rating, priority level, and impact score for each question
-- **Transparent Process**: Console logs show LLM requests, responses, and parsed scores in real-time
+- **Critical (9-10)**: Security vulnerabilities, branch protection, secret scanning (~40% of total score)
+- **High (7-8)**: Access control, code ownership, approval workflows (~30% of total score)
+- **Moderate (4-6)**: Templates, commit conventions, repository strategy (~20% of total score)
+- **Standard (1-3)**: Naming conventions, cleanup automation, metrics (~10% of total score)
 
-This ensures that critical governance practices contribute more to your final score than minor improvements.
+This ensures that implementing critical security and quality practices has the most significant impact on your overall assessment score.
 
 ## Architecture
 
@@ -25,14 +24,14 @@ User → Streamlit Web UI
          ↓
 Question Orchestrator (Python)
          ↓
-Local LLM (Ollama) ← AI scores importance & classifies answers
+Azure OpenAI (GPT-4) ← AI analyzes answers & generates insights
          ↓
 Scoring Engine
          ↓
 Interactive Results Dashboard
 ```
 
-**No databases. No GitHub access. No secrets. 100% local.**
+**Cloud-based AI with enterprise security. No local model required.**
 
 ## Scoring Pillars (Total = 100)
 
@@ -50,24 +49,24 @@ Interactive Results Dashboard
 - **Python 3.10+**
 - **Streamlit 1.52+** (Modern web interface)
 - **Plotly 5.18+** (Interactive visualizations)
-- **Ollama** (Local LLM)
+- **Azure OpenAI** (GPT-4 deployment)
 - **Pydantic** (Data validation)
-
-## Recommended Models
-
-| Model                   | Characteristics      |
-| ----------------------- | -------------------- |
-| `qwen2.5:0.5b-instruct` | Fastest, recommended |
-
-**Use `qwen2.5:0.5b-instruct` (default)**
 
 ## Prerequisites
 
-1. **Install Ollama**: [https://ollama.ai](https://ollama.ai)
-2. **Pull a model**:
-   ```bash
-   ollama pull qwen2.5:0.5b-instruct
-   ```
+1. **Azure OpenAI Service**: Access to Azure OpenAI with GPT-4 deployment
+2. **API Key**: Set up in `.env` file (see Configuration section)
+
+## Configuration
+
+Create a `.env` file in the project root:
+
+```bash
+AZURE_OPENAI_API_KEY=your_api_key_here
+AZURE_OPENAI_ENDPOINT=https://your-resource.cognitiveservices.azure.com/
+AZURE_OPENAI_DEPLOYMENT=gpt-4.1-mini
+AZURE_OPENAI_API_VERSION=2025-01-01-preview
+```
 
 ## Installation
 
@@ -88,7 +87,7 @@ The application will:
 
 1. Open automatically in your browser at `http://localhost:8501`
 2. Display a professional welcome page with platform selection
-3. Score question importance on-demand as you progress
+3. Connect to Azure OpenAI for AI analysis
 4. Provide binary YES/NO responses for clear assessment
 5. Show comprehensive results with interactive charts and detailed breakdowns
 6. Allow export of results as JSON
@@ -96,7 +95,7 @@ The application will:
 ### Features
 
 - **Modern UI**: Professional design with dark blue theme and clean interface
-- **Real-time Scoring**: Questions scored individually as you answer them
+- **AI-Powered Insights**: Real-time analysis using Azure OpenAI GPT-4
 - **Visual Feedback**: Progress tracking, gauge charts, and pillar breakdowns
 - **Detailed Logging**: Console shows LLM interactions, responses, and scoring decisions
 - **Binary Assessment**: Simple YES/NO responses eliminate misclassification

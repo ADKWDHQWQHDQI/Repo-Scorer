@@ -29,7 +29,7 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded",
     menu_items={
-        'About': "Repository Quality Scorer - Professional assessment tool powered by local AI (Ollama). No data leaves your machine."
+        'About': "Repository Quality Scorer - Professional assessment tool powered by Azure OpenAI. Secure cloud-based AI analysis."
     }
 )
 
@@ -332,7 +332,7 @@ def render_welcome_page():
                 <li><strong>Intelligent Importance Weighting:</strong> Critical security and quality practices receive higher priority</li>
                 <li><strong>Comprehensive Executive Summary:</strong> Professional report with strategic implementation roadmap</li>
                 <li><strong>Strengths and Gaps Analysis:</strong> Clear identification of implemented practices and improvement opportunities</li>
-                <li><strong>Privacy-First Architecture:</strong> All AI processing performed locally via Ollama</li>
+                <li><strong>Secure Cloud AI:</strong> All AI processing via Azure OpenAI with enterprise-grade security</li>
             </ul>
         </div>
         """, unsafe_allow_html=True)
@@ -396,10 +396,9 @@ def render_welcome_page():
     <div style='background: #f8fafc; padding: 2rem; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; margin-top: 2rem;'>
         <h4 style='color: #1e293b; text-align: center; font-weight: 700; font-size: 1.3rem; margin-bottom: 1.5rem;'>Assessment Workflow</h4>
         <ol style='color: #475569; line-height: 2; font-size: 1.05rem;'>
-            <li>Ensure <strong>Ollama is running</strong> locally with a supported model</li>
             <li>Select your repository platform (GitHub, GitLab, or Azure DevOps)</li>
             <li>Answer <strong>15 curated questions</strong> with simple YES or NO responses</li>
-            <li><strong>AI analyzes each answer</strong> in real-time (approximately 2-3 seconds per question)</li>
+            <li><strong>Azure OpenAI analyzes each answer</strong> in real-time</li>
             <li>Complete assessment to receive <strong>comprehensive AI-generated summary</strong></li>
             <li>Review <strong>strengths, gaps, and prioritized roadmap</strong> for improvement</li>
             <li>Export detailed results as JSON for documentation and tracking</li>
@@ -409,7 +408,7 @@ def render_welcome_page():
         </div>
     </div>
         <p style='margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid #e2e8f0; color: #64748b; font-size: 0.9rem;'>
-            <strong>Privacy Assurance:</strong> 100% Local Processing - All AI analysis is performed on your machine. No data is transmitted to external servers.
+            <strong>Security Notice:</strong> Azure OpenAI provides enterprise-grade security and compliance. Your data is processed securely in Microsoft's cloud infrastructure.
         </p>
     </div>
     """, unsafe_allow_html=True)
@@ -423,7 +422,7 @@ def start_assessment(tool: RepositoryTool):
 
 
 def check_system_readiness():
-    """Check if Ollama is ready and initialize orchestrator"""
+    """Check if Azure OpenAI is ready and initialize orchestrator"""
     if st.session_state.orchestrator is None:
         st.session_state.orchestrator = AssessmentOrchestrator(
             tool=st.session_state.selected_tool
@@ -1090,16 +1089,16 @@ def main():
         st.markdown("---")
         st.markdown("### System Requirements")
         
-        # Display actual model being used
-        model_name = "Not loaded"
+        # Display AI service info
+        deployment_name = "Not loaded"
         if st.session_state.orchestrator:
-            model_name = st.session_state.orchestrator.ollama.model
+            deployment_name = st.session_state.orchestrator.ai_service.deployment
         
         st.markdown(f"""
         <div style='color: white;'>
-        <p style='margin: 0.25rem 0;'><strong>Ollama:</strong> Running locally</p>
-        <p style='margin: 0.25rem 0;'><strong>Model:</strong> {model_name}</p>
-        <p style='margin: 0.25rem 0;'><strong>Port:</strong> 11434</p>
+        <p style='margin: 0.25rem 0;'><strong>AI Service:</strong> Azure OpenAI</p>
+        <p style='margin: 0.25rem 0;'><strong>Model:</strong> {deployment_name}</p>
+        <p style='margin: 0.25rem 0;'><strong>Status:</strong> Cloud-based</p>
         </div>
         """, unsafe_allow_html=True)
         
@@ -1130,16 +1129,13 @@ def main():
         
         if is_ready:
             st.success("✓ " + message)
-            with st.spinner("AI is analyzing question importance... This may take a few minutes."):
-                # The importance weighting is done in check_readiness
-                pass
-            st.success("✓ Question importance weights assigned")
+            st.success("✓ Azure OpenAI ready for analysis")
             st.session_state.stage = "assessment"
             st.session_state.system_ready = True
             st.rerun()
         else:
             st.error("✗ " + message)
-            st.info("Please ensure Ollama is running and the required model is available.")
+            st.info("Please check your Azure OpenAI service configuration and connectivity.")
             if st.button("Retry"):
                 st.rerun()
             if st.button("Back to Home"):
