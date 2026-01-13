@@ -12,7 +12,9 @@ except ImportError:
         "ollama package not found. Please install: pip install ollama"
     )
 
-from repo_scorer.config import QUESTION_IMPORTANCE_PROMPT
+# Deprecated: QUESTION_IMPORTANCE_PROMPT is no longer used
+# Importance scores are now manually defined in config.py
+QUESTION_IMPORTANCE_PROMPT = """Deprecated - importance scores are now in config"""
 
 # Load environment variables
 load_dotenv()
@@ -27,7 +29,7 @@ class OllamaService:
         host: Optional[str] = None,
         timeout: int = 60,
     ):
-        self.model = model or os.getenv("OLLAMA_MODEL", "phi-3:mini")
+        self.model = model or os.getenv("OLLAMA_MODEL", "qwen2.5:0.5b-instruct")
         self.host = host or os.getenv("OLLAMA_HOST", "http://localhost:11434")
         self.timeout = timeout or int(os.getenv("OLLAMA_TIMEOUT", "60"))
         # Don't create client here - create fresh for each operation to avoid event loop issues
@@ -78,6 +80,132 @@ class OllamaService:
         except Exception as e:
             print(f"Ollama health check failed: {e}")
             return False, False
+    
+    async def analyze_answer(self, question: str, answer: str, importance: float) -> str:
+        """
+        Analyze a single question-answer pair and provide brief insight
+        
+        Args:
+            question: The governance question
+            answer: User's answer (yes/no with optional details)
+            importance: Importance score of the question (1-10)
+            
+        Returns:
+            Brief analysis/insight (2-3 sentences)
+        """
+        prompt = f"""Question: {question}
+Answer: {answer}
+
+Provide 1-2 sentence insight (max 40 words):
+If YES: Impact and benefit
+If NO: Why it matters"""
+        
+        print(f"🤖 Analyzing Q{importance:.0f}... ", end="", flush=True)
+        
+        try:
+            client = self._get_client()
+            response = await asyncio.wait_for(
+                client.generate(
+                    model=self.model,
+                    prompt=prompt,
+                    system="Repository governance expert. Be concise.",
+                    stream=False,
+                    options={
+                        "temperature": 0.6,
+                        "num_predict": 50,  # Shorter for speed
+                    },
+                ),
+                timeout=20,  # Fast timeout
+            )
+            analysis = response["response"].strip()
+            print(f"✅ Done")
+            return analysis
+        except asyncio.TimeoutError:
+            print(f"⚠️ Timeout")
+            return "Analysis unavailable (timeout)."
+        except Exception as e:
+            error_msg = str(e)
+            if "model" in error_msg.lower() and "not found" in error_msg.lower():
+                print(f"⚠️ Model not found")
+            else:
+                print(f"⚠️ Failed")
+            return "Analysis unavailable for this response."
+    
+    async def generate_final_summary(self, 
+                                     tool_name: str,
+                                     yes_answers: list[tuple[str, str, float, str]], 
+                                     no_answers: list[tuple[str, str, float, str]],
+                                     final_score: float) -> str:
+        """
+        Generate comprehensive final summary with strengths and improvement recommendations
+        
+        Args:
+            tool_name: Name of the repository tool (GitHub/GitLab/Azure DevOps)
+            yes_answers: List of (question, answer, importance, analysis) for YES responses
+            no_answers: List of (question, answer, importance, analysis) for NO responses
+            final_score: Final assessment score (0-100)
+            
+        Returns:
+            Comprehensive professional summary
+        """
+        # Build context efficiently
+        strengths_context = "\n".join([
+            f"- {q} (Importance: {imp}/10)"
+            for q, _, imp, _ in yes_answers[:10]  # Limit to avoid token overflow
+        ])
+        
+        gaps_context = "\n".join([
+            f"- {q} (Importance: {imp}/10)"
+            for q, _, imp, _ in no_answers[:10]  # Limit to avoid token overflow
+        ])
+        
+        prompt = f"""Assessment: {tool_name} | Score: {final_score}/100 | Implemented: {len(yes_answers)}/{len(yes_answers) + len(no_answers)}
+
+STRENGTHS:
+{strengths_context[:500] if strengths_context else "None"}
+
+GAPS:
+{gaps_context[:500] if gaps_context else "None"}
+
+Provide concise summary (max 300 words):
+1. Executive Summary (2 sentences)
+2. Top 3 Strengths
+3. Top 3 Critical Improvements (why + how)
+4. Quick Roadmap: Immediate/Short/Long-term priorities
+
+Be specific and actionable."""
+        
+        print(f"\n📊 Generating summary... ", end="", flush=True)
+        
+        try:
+            client = self._get_client()
+            response = await asyncio.wait_for(
+                client.generate(
+                    model=self.model,
+                    prompt=prompt,
+                    system="DevOps expert. Concise, actionable guidance.",
+                    stream=False,
+                    options={
+                        "temperature": 0.6,
+                        "num_predict": 350,  # Reduced for speed
+                    },
+                ),
+                timeout=40,  # Fast timeout
+            )
+            summary = response["response"].strip()
+            print(f"✅ Done ({len(summary)} chars)")
+            return summary
+        except asyncio.TimeoutError:
+            print(f"⚠️ Timeout (>40s)")
+            return "Summary generation timed out. Review individual question insights below."
+        except Exception as e:
+            error_msg = str(e)
+            if "model" in error_msg.lower() and "not found" in error_msg.lower():
+                print(f"⚠️ Model not found")
+                return f"Model '{self.model}' not available. Install: ollama pull {self.model}"
+            else:
+                print(f"⚠️ Failed: {e}")
+                return "Unable to generate summary. Review individual question insights below."
 
     async def score_question_importance(self, question_text: str, default_score: float = 5.0) -> float:
         """

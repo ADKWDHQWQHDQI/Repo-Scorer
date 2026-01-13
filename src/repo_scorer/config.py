@@ -14,11 +14,11 @@ class RepositoryTool(str, Enum):
 
 @dataclass
 class Question:
-    """Individual question with weight"""
+    """Individual question with manually assigned importance weight"""
     id: str
     text: str
     max_score: float
-    importance: float = 5.0  # Default importance, will be set by LLM (1-10 scale)
+    importance: float  # Manual importance score (1-10 scale) - higher means more critical
 
 
 @dataclass
@@ -29,95 +29,67 @@ class Pillar:
     questions: List[Question]
 
 
-# Question importance scoring prompt
-QUESTION_IMPORTANCE_PROMPT = """You are evaluating the importance of repository governance practices. Your task is to DIFFERENTIATE between practices - not all practices are equally important.
-
-Question:
-"{question}"
-
-Rate the importance of this practice for a well-governed repository on a scale of 1-10:
-
-CRITICAL FOUNDATION (9-10):
-- Security vulnerabilities that could lead to breaches
-- Practices that prevent production incidents
-- Access control and authentication fundamentals
-- Example: Branch protection, code review requirements
-
-HIGH IMPACT (7-8):
-- Significantly improves code quality or team velocity
-- Prevents common mistakes and rework
-- Example: Automated testing, CODEOWNERS
-
-MODERATE IMPACT (4-6):
-- Good practices that help but aren't critical
-- Process improvements with measurable benefits
-- Example: PR templates, commit conventions
-
-NICE TO HAVE (1-3):
-- Minor conveniences or optimizations
-- Practices with limited impact on outcomes
-- Example: Aesthetic preferences, optional tooling
-
-IMPORTANT: Be critical and specific. Most practices should NOT be 9-10. Reserve high scores for truly critical items.
-
-Respond with ONLY a single number from 1 to 10."""
-
-
-# GitHub Questions (15 questions, ~6.67 points each)
+# GitHub Questions with Manual Importance Scores
+# Each tuple is (question_text, importance_score)
+# Importance scale: 1-10 (1=low, 10=critical)
 GITHUB_QUESTIONS = [
-    "Are repositories organized using organizations and teams, with role-based access instead of individual permissions?",
-    "Is branch protection enforced (mandatory PRs, minimum reviewers, status checks)?",
-    "Are CODEOWNERS files used to automatically assign reviewers for critical paths?",
-    "Are Pull Request templates standardized across repositories?",
-    "Is signed commits or commit verification enforced?",
-    "Are secrets prevented from being committed using GitHub secret scanning?",
-    "Are repository visibility policies (public/internal/private) clearly defined and enforced?",
-    "Is repository naming and structure standardized across the organization?",
-    "Are GitHub Actions status checks mandatory before merge?",
-    "Are stale branches automatically cleaned up after merge?",
-    "Is monorepo vs multirepo strategy clearly defined and documented?",
-    "Are forking policies clearly defined for internal and external contributors?",
-    "Is repository archival managed for inactive or deprecated projects?",
-    "Are security alerts (Dependabot, CodeQL) actively monitored and acted upon?",
-    "Is repository activity (PR cycle time, merge frequency) measured and reviewed periodically?",
+    ("Are repositories organized using organizations and teams, with role-based access instead of individual permissions?", 8.0),
+    ("Is branch protection enforced (mandatory PRs, minimum reviewers, status checks)?", 10.0),
+    ("Are CODEOWNERS files used to automatically assign reviewers for critical paths?", 7.0),
+    ("Are Pull Request templates standardized across repositories?", 5.0),
+    ("Is signed commits or commit verification enforced?", 6.0),
+    ("Are secrets prevented from being committed using GitHub secret scanning?", 10.0),
+    ("Are repository visibility policies (public/internal/private) clearly defined and enforced?", 9.0),
+    ("Is repository naming and structure standardized across the organization?", 4.0),
+    ("Are GitHub Actions status checks mandatory before merge?", 8.0),
+    ("Are stale branches automatically cleaned up after merge?", 3.0),
+    ("Is monorepo vs multirepo strategy clearly defined and documented?", 6.0),
+    ("Are forking policies clearly defined for internal and external contributors?", 5.0),
+    ("Is repository archival managed for inactive or deprecated projects?", 3.0),
+    ("Are security alerts (Dependabot, CodeQL) actively monitored and acted upon?", 9.0),
+    ("Is repository activity (PR cycle time, merge frequency) measured and reviewed periodically?", 4.0),
 ]
 
-# GitLab Questions (15 questions, ~6.67 points each)
+# GitLab Questions with Manual Importance Scores
+# Each tuple is (question_text, importance_score)
+# Importance scale: 1-10 (1=low, 10=critical)
 GITLAB_QUESTIONS = [
-    "Are repositories structured using groups and subgroups aligned to teams or products?",
-    "Is merge request approval rules enforced based on branch and code area?",
-    "Are protected branches configured with restricted push and merge permissions?",
-    "Are merge request templates standardized and mandatory?",
-    "Is commit signing or verification enabled?",
-    "Are push rules configured to prevent secrets, large files, or invalid commits?",
-    "Are code owners defined using CODEOWNERS for approval routing?",
-    "Are repository access levels (Guest, Reporter, Developer, Maintainer) clearly governed?",
-    "Are merge strategies (merge commit, squash, fast-forward) standardized?",
-    "Are inactive branches and repositories automatically identified and cleaned up?",
-    "Is monorepo vs multirepo guidance documented and followed?",
-    "Are fork workflows governed for internal and external contributions?",
-    "Are repository compliance checks enforced before merge?",
-    "Are security scanning results reviewed before code promotion?",
-    "Are repository KPIs (MR aging, review time, merge rate) tracked and improved?",
+    ("Are repositories structured using groups and subgroups aligned to teams or products?", 7.0),
+    ("Is merge request approval rules enforced based on branch and code area?", 9.0),
+    ("Are protected branches configured with restricted push and merge permissions?", 10.0),
+    ("Are merge request templates standardized and mandatory?", 5.0),
+    ("Is commit signing or verification enabled?", 6.0),
+    ("Are push rules configured to prevent secrets, large files, or invalid commits?", 10.0),
+    ("Are code owners defined using CODEOWNERS for approval routing?", 7.0),
+    ("Are repository access levels (Guest, Reporter, Developer, Maintainer) clearly governed?", 8.0),
+    ("Are merge strategies (merge commit, squash, fast-forward) standardized?", 4.0),
+    ("Are inactive branches and repositories automatically identified and cleaned up?", 3.0),
+    ("Is monorepo vs multirepo guidance documented and followed?", 6.0),
+    ("Are fork workflows governed for internal and external contributions?", 5.0),
+    ("Are repository compliance checks enforced before merge?", 8.0),
+    ("Are security scanning results reviewed before code promotion?", 9.0),
+    ("Are repository KPIs (MR aging, review time, merge rate) tracked and improved?", 4.0),
 ]
 
-# Azure DevOps Questions (15 questions, ~6.67 points each)
+# Azure DevOps Questions with Manual Importance Scores
+# Each tuple is (question_text, importance_score)
+# Importance scale: 1-10 (1=low, 10=critical)
 AZURE_DEVOPS_QUESTIONS = [
-    "Are repositories organized using projects and teams aligned to delivery units?",
-    "Are branch policies enforced (minimum reviewers, build validation, comment resolution)?",
-    "Are path-based policies used for critical code areas?",
-    "Are pull request templates standardized?",
-    "Is commit history hygiene maintained (squash/rebase strategies)?",
-    "Are service hooks or policies used to prevent secret leakage?",
-    "Are repository permissions managed using Azure AD groups?",
-    "Are naming conventions enforced for repos and branches?",
-    "Are build validations mandatory before PR completion?",
-    "Are stale branches periodically cleaned up?",
-    "Is there a defined repo strategy for microservices vs monoliths?",
-    "Are fork-based workflows governed for partners or vendors?",
-    "Are repo policies audited regularly for compliance?",
-    "Are security issues in repos tracked and remediated systematically?",
-    "Are repository metrics (PR throughput, reviewer load) used for process improvement?",
+    ("Are repositories organized using projects and teams aligned to delivery units?", 7.0),
+    ("Are branch policies enforced (minimum reviewers, build validation, comment resolution)?", 10.0),
+    ("Are path-based policies used for critical code areas?", 8.0),
+    ("Are pull request templates standardized?", 5.0),
+    ("Is commit history hygiene maintained (squash/rebase strategies)?", 4.0),
+    ("Are service hooks or policies used to prevent secret leakage?", 10.0),
+    ("Are repository permissions managed using Azure AD groups?", 8.0),
+    ("Are naming conventions enforced for repos and branches?", 3.0),
+    ("Are build validations mandatory before PR completion?", 9.0),
+    ("Are stale branches periodically cleaned up?", 3.0),
+    ("Is there a defined repo strategy for microservices vs monoliths?", 6.0),
+    ("Are fork-based workflows governed for partners or vendors?", 5.0),
+    ("Are repo policies audited regularly for compliance?", 7.0),
+    ("Are security issues in repos tracked and remediated systematically?", 9.0),
+    ("Are repository metrics (PR throughput, reviewer load) used for process improvement?", 4.0),
 ]
 
 
@@ -141,17 +113,21 @@ def get_questions_for_tool(tool: RepositoryTool) -> Dict[str, Pillar]:
     tool_questions = tool_questions_map[tool]
     tool_name = tool.value.replace("_", " ").title()
     
-    # Create tool-specific pillar (100 points)
+    # Create tool-specific pillar with importance-based scoring
+    # Calculate total importance to distribute 100 points proportionally
+    total_importance = sum(importance for _, importance in tool_questions)
+    
     tool_pillar_questions = [
         Question(
             id=f"{tool.value}_{i+1}",
-            text=q,
-            max_score=round(100.0 / len(tool_questions), 2),
+            text=question_text,
+            max_score=round((importance / total_importance) * 100.0, 2),
+            importance=importance
         )
-        for i, q in enumerate(tool_questions)
+        for i, (question_text, importance) in enumerate(tool_questions)
     ]
     
-    # Adjust last question to ensure total is exactly 100
+    # Adjust last question to ensure total is exactly 100 points
     total = sum(q.max_score for q in tool_pillar_questions)
     if abs(total - 100.0) > 0.01:
         tool_pillar_questions[-1].max_score = round(

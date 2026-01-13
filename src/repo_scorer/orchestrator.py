@@ -18,147 +18,107 @@ class AssessmentOrchestrator:
         self.tool = tool
         self.ollama = OllamaService(model=model)
         self.question_scores: Dict[str, float] = {}
-        self.scored_questions: set = set()  # Track which questions have been scored
+        self.answer_analyses: Dict[str, str] = {}  # Store LLM analysis for each answer
         
         # Load predefined questions for the selected tool
+        # Questions now have manual importance scores from config
         self.pillars = get_questions_for_tool(tool)
         self.questions = get_all_questions(self.pillars)
+        
+        print(f"\n📋 Loaded {len(self.questions)} questions with manual importance scores")
+        self._display_importance_summary()
     
-    async def score_question_importance(self, question_id: str) -> float:
+    def _display_importance_summary(self) -> None:
+        """Display summary of importance scores distribution"""
+        all_questions = []
+        for pillar_id, pillar in self.pillars.items():
+            for question in pillar.questions:
+                all_questions.append(question)
+        
+        if not all_questions:
+            return
+        
+        # Count by importance tier
+        critical = sum(1 for q in all_questions if q.importance >= 9)
+        high = sum(1 for q in all_questions if 7 <= q.importance < 9)
+        moderate = sum(1 for q in all_questions if 4 <= q.importance < 7)
+        low = sum(1 for q in all_questions if q.importance < 4)
+        
+        print(f"   Critical (9-10): {critical} questions")
+        print(f"   High (7-8): {high} questions")
+        print(f"   Moderate (4-6): {moderate} questions")
+        print(f"   Low (1-3): {low} questions")
+        print()
+    
+    async def analyze_answer(self, question_id: str, question_text: str, 
+                           answer: str, importance: float) -> str:
         """
-        Score importance for a single question on-demand with detailed logging
+        Analyze an individual answer using LLM and store the analysis
         
         Args:
-            question_id: ID of the question to score
+            question_id: Question identifier
+            question_text: The question text
+            answer: User's answer
+            importance: Importance score of the question
             
         Returns:
-            Importance score (1-10)
+            LLM analysis of the answer
         """
-        # Check if already scored
-        if question_id in self.scored_questions:
-            # Find the question to get its current importance
-            for pillar_id, pillar in self.pillars.items():
-                for question in pillar.questions:
-                    if question.id == question_id:
-                        print(f"   ℹ️  Using cached importance score: {question.importance}/10")
-                        return question.importance
+        analysis = await self.ollama.analyze_answer(question_text, answer, importance)
+        self.answer_analyses[question_id] = analysis
+        return analysis
+    
+    async def generate_final_summary(self, answers: Dict[str, Dict]) -> str:
+        """
+        Generate comprehensive final summary based on all answers
         
-        # Find the question
-        question_obj = None
+        Args:
+            answers: Dictionary of question_id -> {classification, answer, score, ...}
+            
+        Returns:
+            Professional summary with strengths and recommendations
+        """
+        # Separate YES and NO answers with their analyses
+        yes_answers = []
+        no_answers = []
+        
         for pillar_id, pillar in self.pillars.items():
             for question in pillar.questions:
-                if question.id == question_id:
-                    question_obj = question
-                    break
-            if question_obj:
-                break
+                if question.id in answers:
+                    answer_data = answers[question.id]
+                    analysis = self.answer_analyses.get(question.id, "No analysis available")
+                    
+                    answer_tuple = (
+                        question.text,
+                        answer_data.get("answer", ""),
+                        question.importance,
+                        analysis
+                    )
+                    
+                    if answer_data["classification"] == "yes":
+                        yes_answers.append(answer_tuple)
+                    else:
+                        no_answers.append(answer_tuple)
         
-        if not question_obj:
-            print(f"   ⚠️  Question {question_id} not found")
-            return 6.0
+        # Sort by importance (highest first)
+        yes_answers.sort(key=lambda x: x[2], reverse=True)
+        no_answers.sort(key=lambda x: x[2], reverse=True)
         
-        print(f"\n🔍 Scoring Question Importance...")
-        print(f"   Question: {question_obj.text[:80]}..." if len(question_obj.text) > 80 else f"   Question: {question_obj.text}")
-        print(f"   Current max score: {question_obj.max_score} points")
+        # Calculate final score
+        final_score = sum(self.question_scores.values())
         
-        # Default score based on question position (varied distribution)
-        default_scores = [7.0, 8.0, 6.0, 9.0, 5.0, 7.5, 6.5, 8.5, 4.0, 7.0, 6.0, 8.0, 5.5, 7.5, 6.5]
-        question_index = len(self.scored_questions)
-        default_score = default_scores[question_index] if question_index < len(default_scores) else 6.0
+        # Get tool name
+        tool_name = self.tool.value.replace("_", " ").title()
         
-        # Score with LLM
-        importance = await self.ollama.score_question_importance(
-            question_obj.text, 
-            default_score=default_score
+        # Generate summary
+        summary = await self.ollama.generate_final_summary(
+            tool_name=tool_name,
+            yes_answers=yes_answers,
+            no_answers=no_answers,
+            final_score=final_score
         )
         
-        # Update the question's importance
-        question_obj.importance = importance
-        
-        # Mark as scored
-        self.scored_questions.add(question_id)
-        
-        # IMMEDIATELY recalculate max_scores for all questions based on current importance values
-        # This ensures the display always shows LLM-calculated weights, not hardcoded values
-        self._recalculate_max_scores()
-        
-        print(f"   ✅ Importance Score: {importance}/10")
-        print(f"   Updated max score: {question_obj.max_score:.2f} points\n")
-        
-        return importance
-    
-    def _recalculate_max_scores(self) -> None:
-        """
-        Recalculate max_scores for all questions based on their importance weights.
-        This is called after each question importance is scored to keep distribution current.
-        
-        For questions not yet scored:
-        - If no questions scored yet: use equal distribution (100/total)
-        - If some scored: unscored questions get average importance of scored ones
-        """
-        all_questions = []
-        scored_questions = []
-        unscored_questions = []
-        
-        # Collect questions and categorize by scoring status
-        for pillar_id, pillar in self.pillars.items():
-            for question in pillar.questions:
-                all_questions.append(question)
-                if question.id in self.scored_questions:
-                    scored_questions.append(question)
-                else:
-                    unscored_questions.append(question)
-        
-        if not scored_questions:
-            # No questions scored yet - use equal distribution
-            points_per_question = 100.0 / len(all_questions)
-            for question in all_questions:
-                question.max_score = points_per_question
-        else:
-            # Some questions are scored
-            # For unscored questions, estimate importance as average of scored questions
-            avg_importance = sum(q.importance for q in scored_questions) / len(scored_questions)
-            for question in unscored_questions:
-                question.importance = avg_importance
-            
-            # Now distribute 100 points proportionally based on all importance values
-            total_importance = sum(q.importance for q in all_questions)
-            
-            if total_importance > 0:
-                for question in all_questions:
-                    question.max_score = (question.importance / total_importance) * 100.0
-            else:
-                # Fallback: equal distribution
-                points_per_question = 100.0 / len(all_questions)
-                for question in all_questions:
-                    question.max_score = points_per_question
-        
-        # Refresh questions list
-        self.questions = get_all_questions(self.pillars)
-        
-        print(f"   📊 Recalculated scores - {len(scored_questions)}/{len(all_questions)} questions scored")
-    
-    def normalize_question_scores(self) -> None:
-        """
-        Final normalization of question max_scores (called at assessment completion).
-        By this point, all questions should have their importance scored.
-        """
-        # Just call the internal recalculation method
-        self._recalculate_max_scores()
-        
-        # Collect all questions for summary
-        all_questions = []
-        total_importance = 0.0
-        
-        for pillar_id, pillar in self.pillars.items():
-            for question in pillar.questions:
-                all_questions.append(question)
-                total_importance += question.importance
-        
-        print("\n📊 Final Score Normalization Complete")
-        print(f"   Total importance: {total_importance:.2f}")
-        print(f"   Points distributed: 100.0")
-        print(f"   Questions: {len(all_questions)}\n")
+        return summary
 
     async def check_readiness(self) -> tuple[bool, str]:
         """
@@ -178,5 +138,5 @@ class AssessmentOrchestrator:
                 f"Model '{self.ollama.model}' not found. Run: ollama pull {self.ollama.model}",
             )
         
-        print("\n✅ System ready - questions will be scored as you progress through the assessment\n")
+        print("\n✅ System ready - questions use predefined importance scores\n")
         return True, "System ready"

@@ -55,20 +55,18 @@ Interactive Results Dashboard
 
 ## Recommended Models
 
-| Model                 | Characteristics      |
-| --------------------- | -------------------- |
-| `phi-3:mini`          | Extremely fast       |
-| `llama3.2:3b`         | Fast, good reasoning |
-| `mistral:7b-instruct` | Better reasoning     |
+| Model                   | Characteristics      |
+| ----------------------- | -------------------- |
+| `qwen2.5:0.5b-instruct` | Fastest, recommended |
 
-**Start with `phi-3:mini`**
+**Use `qwen2.5:0.5b-instruct` (default)**
 
 ## Prerequisites
 
 1. **Install Ollama**: [https://ollama.ai](https://ollama.ai)
 2. **Pull a model**:
    ```bash
-   ollama pull phi-3:mini
+   ollama pull qwen2.5:0.5b-instruct
    ```
 
 ## Installation
@@ -110,7 +108,7 @@ The application will:
 🔍 Scoring Question Importance...
    Question: Are repositories organized using organizations and teams...
    Current max score: 6.67 points
-   🤖 Sending request to LLM (phi-3:mini)...
+   🤖 Sending request to LLM (qwen2.5:0.5b-instruct)...
    ⏱️  Timeout: 15 seconds
    📥 LLM Response: '8'
    ✨ Parsed Score: 8/10
@@ -167,7 +165,7 @@ Edit `.env` file to customize:
 
 ```env
 OLLAMA_HOST=http://localhost:11434
-OLLAMA_MODEL=phi-3:mini
+OLLAMA_MODEL=qwen2.5:0.5b-instruct
 ```
 
 ## Development
@@ -208,11 +206,11 @@ MIT
 
 **Issue**: "Model not found"
 
-- **Solution**: Pull the model: `ollama pull phi-3:mini`
+- **Solution**: Pull the model: `ollama pull qwen2.5:0.5b-instruct`
 
 **Issue**: "Importance scoring timeout"
 
-- **Solution**: Model may be slow. Check system resources or try a faster model like `phi-3:mini`
+- **Solution**: Model may be slow. Check system resources. Application is optimized for `qwen2.5:0.5b-instruct`
 
 ---
 
