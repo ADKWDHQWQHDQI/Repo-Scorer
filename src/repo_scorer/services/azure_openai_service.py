@@ -70,22 +70,37 @@ class AzureOpenAIService:
         Returns:
             Brief analysis/insight (2-3 sentences)
         """
-        prompt = f"""Question: {question}
-Answer: {answer}
+        priority_level = "CRITICAL" if importance >= 9 else "HIGH" if importance >= 7 else "MODERATE" if importance >= 5 else "STANDARD"
+        
+        prompt = f"""Analyze this repository governance practice:
 
-Provide 1-2 sentence insight (max 40 words):
-If YES: Impact and benefit
-If NO: Risk and recommendation"""
+Question: {question}
+Answer: {answer}
+Priority Level: {priority_level} (Importance: {importance}/10)
+
+Provide a focused, actionable insight (35-45 words):
+
+If YES:
+- State the specific positive impact on repository quality/security/efficiency
+- Mention 1 key benefit this practice provides
+- Briefly note how it protects or enhances the development workflow
+
+If NO:
+- Clearly state the primary risk or vulnerability this creates
+- Provide 1 specific, actionable recommendation to implement this practice
+- Mention the expected improvement once implemented
+
+Focus on business value and technical impact. Be direct and specific."""
 
         try:
             response = self.client.chat.completions.create(
                 model=self.deployment,
                 messages=[
-                    {"role": "system", "content": "You are a repository governance expert. Provide concise, actionable insights."},
+                    {"role": "system", "content": "You are a senior DevOps and repository governance expert with deep knowledge of CI/CD, security best practices, and software quality standards. Provide insights that are technically accurate, actionable, and business-focused. Avoid generic advice."},
                     {"role": "user", "content": prompt}
                 ],
-                max_tokens=100,
-                temperature=0.7
+                max_tokens=120,
+                temperature=0.6
             )
             
             content = response.choices[0].message.content
@@ -111,43 +126,79 @@ If NO: Risk and recommendation"""
         # Prepare strengths (YES answers, highest importance first)
         yes_sorted = sorted(yes_answers, key=lambda x: x[2], reverse=True)
         strengths_text = "\n".join([
-            f"- {q} (Priority: {imp:.0f}/10)"
-            for q, _, imp, _ in yes_sorted[:5]  # Top 5 strengths
+            f"  • {q} [Priority: {imp:.0f}/10]"
+            for q, _, imp, _ in yes_sorted[:7]  # Top 7 strengths
         ])
         
         # Prepare gaps (NO answers, highest importance first)
         no_sorted = sorted(no_answers, key=lambda x: x[2], reverse=True)
         gaps_text = "\n".join([
-            f"- {q} (Priority: {imp:.0f}/10)"
-            for q, _, imp, _ in no_sorted[:5]  # Top 5 gaps
+            f"  • {q} [Priority: {imp:.0f}/10]"
+            for q, _, imp, _ in no_sorted[:7]  # Top 7 gaps
         ])
         
-        prompt = f"""Generate a professional repository governance assessment summary.
+        # Calculate score tier
+        score_tier = "EXCELLENT" if total_score >= 80 else "GOOD" if total_score >= 60 else "MODERATE" if total_score >= 40 else "NEEDS IMPROVEMENT"
+        
+        prompt = f"""You are a senior DevOps and repository governance consultant preparing an executive-level assessment report.
 
-OVERALL SCORE: {total_score:.1f}/100
+=== ASSESSMENT OVERVIEW ===
+Overall Score: {total_score:.1f}/100 ({score_tier})
+Implemented Practices: {len(yes_answers)}
+Missing Critical Practices: {len(no_answers)}
 
-IMPLEMENTED STRENGTHS ({len(yes_answers)} practices):
-{strengths_text if strengths_text else "None identified"}
+=== TOP IMPLEMENTED STRENGTHS ===
+{strengths_text if strengths_text else "  • No practices currently implemented"}
 
-CRITICAL GAPS ({len(no_answers)} missing practices):
-{gaps_text if gaps_text else "None identified"}
+=== CRITICAL GAPS & MISSING PRACTICES ===
+{gaps_text if gaps_text else "  • All practices implemented"}
 
-Provide:
-1. Executive Overview (2-3 sentences)
-2. Key Strengths (bullet points)
-3. Critical Gaps & Risks (bullet points)
-4. Prioritized Recommendations (3-5 actionable items, prioritize by importance score)
+=== YOUR TASK ===
+Create a professional, executive-level assessment summary with these sections:
 
-Keep it professional, concise, and actionable. Maximum 300 words."""
+**1. EXECUTIVE SUMMARY** (3-4 sentences)
+- Open with the overall governance maturity level and score context
+- Highlight the most critical finding (strength OR gap)
+- State business impact: security posture, development velocity, code quality
+- Provide forward-looking statement about potential improvements
+
+**2. KEY STRENGTHS & COMPETITIVE ADVANTAGES** (3-5 bullet points)
+- Focus on practices with highest priority scores
+- Explain specific business value: reduced risks, faster deployments, better quality
+- Mention how these create competitive advantages or prevent common issues
+- Be specific about the protection or efficiency gained
+
+**3. CRITICAL GAPS & RISK EXPOSURE** (3-5 bullet points)
+- Prioritize by importance score and actual risk
+- Clearly state the security, quality, or operational risk each gap creates
+- Quantify impact where possible: "increases vulnerability to X", "slows release cycle by Y"
+- Connect each gap to real-world consequences teams face
+
+**4. STRATEGIC IMPLEMENTATION ROADMAP** (4-6 prioritized recommendations)
+- Order by: Critical security gaps → High-impact quality improvements → Efficiency gains
+- Format each as: "[PRIORITY LEVEL] Action Item: Specific implementation step"
+- Provide concrete next steps, not generic advice
+- Include quick wins (can be done in days) and strategic initiatives (weeks/months)
+- Mention tools, features, or workflows to adopt
+
+**GUIDELINES:**
+- Write in professional business tone suitable for technical leaders
+- Use specific terminology: branch protection, CODEOWNERS, secret scanning, etc.
+- Avoid generic phrases like "improve security" - be specific about WHAT and HOW
+- Focus on actionable insights, not philosophical statements
+- Maximum 400 words total
+- Use clear formatting with bold section headers
+
+Generate the comprehensive assessment report now:"""
 
         try:
             response = self.client.chat.completions.create(
                 model=self.deployment,
                 messages=[
-                    {"role": "system", "content": "You are a senior repository governance consultant. Provide executive-level insights."},
+                    {"role": "system", "content": "You are a principal DevOps consultant and repository governance expert who has assessed hundreds of enterprise development teams. You understand the business impact of technical practices. Your reports are known for being actionable, specific, and immediately valuable to engineering leadership. You never provide generic advice - every recommendation is concrete and implementation-focused."},
                     {"role": "user", "content": prompt}
                 ],
-                max_tokens=800,
+                max_tokens=1200,
                 temperature=0.7
             )
             
