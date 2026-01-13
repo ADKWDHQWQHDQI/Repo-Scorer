@@ -158,15 +158,6 @@ The application uses a simplified binary YES/NO system:
 ✅ **Explainable**: Every score is traceable  
 ✅ **Professional UI**: Modern web interface with charts
 
-## Configuration
-
-Edit `.env` file to customize:
-
-```env
-OLLAMA_HOST=http://localhost:11434
-OLLAMA_MODEL=qwen2.5:0.5b-instruct
-```
-
 ## Development
 
 Project structure:
@@ -180,7 +171,7 @@ Project structure:
 │       ├── models.py          # Data models
 │       ├── scoring.py         # Scoring logic
 │       └── services/
-│           └── ollama_service.py  # LLM interaction
+│           └── azure_openai_service.py  # Azure OpenAI integration
 ├── requirements.txt
 └── README.md
 ```
@@ -193,27 +184,21 @@ This is a self-contained assessment tool. To add questions:
 2. Add questions to appropriate pillar
 3. Restart the Streamlit app
 
-## License
-
-MIT
-
 ## Troubleshooting
 
-**Issue**: "Cannot connect to Ollama"
+**Issue**: "Cannot connect to Azure OpenAI service"
 
-- **Solution**: Ensure Ollama is running: `ollama serve`
+- **Solution**: Verify your API key and endpoint in `.env` file
+- Check network connectivity to Azure
 
-**Issue**: "Model not found"
+**Issue**: "Deployment not accessible"
 
-- **Solution**: Pull the model: `ollama pull qwen2.5:0.5b-instruct`
-
-**Issue**: "Importance scoring timeout"
-
-- **Solution**: Model may be slow. Check system resources. Application is optimized for `qwen2.5:0.5b-instruct`
+- **Solution**: Verify deployment name matches your Azure OpenAI deployment
+- Ensure your API key has proper permissions
 
 ---
 
-Built with ❤️ using local AI - no data leaves your machine
+Built with ❤️ using Azure OpenAI - Enterprise-grade AI security
 
 ## License
 
