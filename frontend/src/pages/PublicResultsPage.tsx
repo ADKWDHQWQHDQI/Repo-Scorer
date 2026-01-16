@@ -187,7 +187,7 @@ export const PublicResultsPage = () => {
     const scoreText = score >= 80 ? 'text-green-600' : score >= 60 ? 'text-yellow-600' : score >= 40 ? 'text-orange-600' : 'text-red-600';
     
     return (
-      <div className="relative w-64 h-64 mx-auto">
+      <div className="relative w-56 h-56 sm:w-64 sm:h-64 mx-auto">
         {/* Circular Progress Ring */}
         <svg className="w-full h-full transform -rotate-90" viewBox="0 0 200 200">
           {/* Background Circle */}
@@ -233,14 +233,14 @@ export const PublicResultsPage = () => {
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50">
       {/* Header */}
       <div className="bg-white shadow-sm border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <Gauge className="w-6 h-6 text-indigo-600" />
-            <h1 className="text-xl font-bold text-gray-900">Shared Assessment Report</h1>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div className="flex items-center space-x-3 min-w-0">
+            <Gauge className="w-5 sm:w-6 h-5 sm:h-6 text-indigo-600 flex-shrink-0" />
+            <h1 className="text-base sm:text-lg lg:text-xl font-bold text-gray-900 truncate">Shared Assessment Report</h1>
           </div>
           <button
             onClick={() => navigate('/')}
-            className="inline-flex items-center px-4 py-2 text-sm text-gray-700 hover:text-indigo-600 transition-colors"
+            className="inline-flex items-center justify-center px-4 py-2 text-sm text-gray-700 hover:text-indigo-600 transition-colors w-full sm:w-auto"
           >
             <Home className="w-4 h-4 mr-2" />
             Create Your Own Assessment
@@ -264,8 +264,8 @@ export const PublicResultsPage = () => {
         </div>
 
         {/* Quality Score Display */}
-        <div className="bg-gradient-to-br from-blue-50 via-white to-purple-50 rounded-2xl shadow-lg p-10 mb-6 hover:shadow-xl transition-shadow duration-300">
-          <h2 className="text-2xl font-bold text-gray-900 mb-8 text-center flex items-center justify-center gap-3">
+        <div className="bg-gradient-to-br from-blue-50 via-white to-purple-50 rounded-2xl shadow-lg p-6 sm:p-8 lg:p-10 mb-6 hover:shadow-xl transition-shadow duration-300">
+          <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 mb-6 sm:mb-8 text-center flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-3">
             <TrendingUp className="w-7 h-7 text-indigo-600" />
             Overall Quality Score
           </h2>
@@ -273,8 +273,8 @@ export const PublicResultsPage = () => {
         </div>
 
         {/* Pillar Breakdown Chart */}
-        <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-          <h2 className="text-xl font-bold text-gray-900 mb-6">Pillar Breakdown</h2>
+        <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6 mb-6">
+          <h2 className="text-lg sm:text-xl font-bold text-gray-900 mb-4 sm:mb-6">Pillar Breakdown</h2>
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={chartData}>
               <CartesianGrid strokeDasharray="3 3" />
@@ -312,22 +312,22 @@ export const PublicResultsPage = () => {
         </div>
 
         {/* AI Summary */}
-        <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-          <h2 className="text-xl font-bold text-gray-900 mb-4">Executive Summary</h2>
+        <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6 mb-6">
+          <h2 className="text-lg sm:text-xl font-bold text-gray-900 mb-4">Executive Summary</h2>
           <div className="prose max-w-none">
             {formatAISummary(summary)}
           </div>
         </div>
 
         {/* Detailed Results */}
-        <div className="bg-white rounded-lg shadow-sm p-6">
-          <h2 className="text-xl font-bold text-gray-900 mb-6">Detailed Question Results</h2>
+        <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6">
+          <h2 className="text-lg sm:text-xl font-bold text-gray-900 mb-4 sm:mb-6">Detailed Question Results</h2>
           <div className="space-y-6">
             {question_results.map((result, index) => (
-              <div key={index} className="border-l-4 border-indigo-600 pl-4 py-2">
-                <div className="flex items-start justify-between mb-2">
-                  <h3 className="text-lg font-semibold text-gray-900">{result.question_text}</h3>
-                  <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+              <div key={index} className="border-l-4 border-indigo-600 pl-3 sm:pl-4 py-2">
+                <div className="flex flex-col sm:flex-row items-start sm:justify-between gap-2 mb-2">
+                  <h3 className="text-base sm:text-lg font-semibold text-gray-900 flex-1">{result.question_text}</h3>
+                  <span className={`px-3 py-1 rounded-full text-xs sm:text-sm font-medium flex-shrink-0 ${
                     result.classification === 'yes'
                       ? 'bg-green-100 text-green-800'
                       : 'bg-red-100 text-red-800'
@@ -335,11 +335,11 @@ export const PublicResultsPage = () => {
                     {result.user_answer}
                   </span>
                 </div>
-                <div className="flex items-center space-x-4 text-sm text-gray-600 mb-2">
+                <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs sm:text-sm text-gray-600 mb-2">
                   <span className="font-medium">{result.pillar_name}</span>
                   <span>Score: {result.score_earned.toFixed(2)} / {result.max_score.toFixed(2)}</span>
                 </div>
-                <p className="text-gray-700">{result.analysis}</p>
+                <p className="text-sm sm:text-base text-gray-700">{result.analysis}</p>
               </div>
             ))}
           </div>
@@ -347,10 +347,10 @@ export const PublicResultsPage = () => {
 
         {/* Footer CTA */}
         <div className="mt-8 text-center">
-          <div className="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-lg p-8 text-white">
-            <Mail className="w-12 h-12 mx-auto mb-4" />
-            <h3 className="text-2xl font-bold mb-2">Want Your Own Assessment?</h3>
-            <p className="text-indigo-100 mb-6">
+          <div className="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-lg p-6 sm:p-8 text-white">
+            <Mail className="w-10 sm:w-12 h-10 sm:h-12 mx-auto mb-4" />
+            <h3 className="text-xl sm:text-2xl font-bold mb-2">Want Your Own Assessment?</h3>
+            <p className="text-sm sm:text-base text-indigo-100 mb-6">
               Get a comprehensive DevSecOps assessment for your repository
             </p>
             <button

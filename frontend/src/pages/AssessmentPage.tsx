@@ -193,7 +193,7 @@ export function AssessmentPage() {
         </div>
       )}
 
-      <div className="max-w-5xl mx-auto py-6 px-4">
+      <div className="max-w-5xl mx-auto py-6 sm:py-8 px-4 sm:px-6 pb-28">
       {/* Header */}
       <div className="text-center mb-6">
         <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 mb-4 shadow-md">
@@ -326,8 +326,8 @@ export function AssessmentPage() {
       )}
 
       {/* Submit Button */}
-      <div className="sticky bottom-6 bg-white rounded-xl p-4 shadow-lg border border-gray-200">
-        <div className="flex items-center justify-between gap-4">
+      <div className="sticky bottom-4 sm:bottom-6 bg-white rounded-xl p-4 shadow-lg border border-gray-200">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div className="flex-1">
             <p className="text-sm font-medium text-gray-900">
               Ready to submit your assessment?
@@ -339,7 +339,7 @@ export function AssessmentPage() {
           <button
             onClick={handleSubmitAssessment}
             disabled={answeredCount < questions.length || isSubmitting}
-            className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold text-sm rounded-lg hover:from-blue-700 hover:to-indigo-700 disabled:from-gray-300 disabled:to-gray-400 disabled:cursor-not-allowed transition-all shadow-md hover:shadow-lg disabled:shadow-none whitespace-nowrap"
+            className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold text-sm rounded-lg hover:from-blue-700 hover:to-indigo-700 disabled:from-gray-300 disabled:to-gray-400 disabled:cursor-not-allowed transition-all shadow-md hover:shadow-lg disabled:shadow-none whitespace-nowrap"
           >
             {isSubmitting ? (
               <>

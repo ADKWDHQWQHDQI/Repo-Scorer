@@ -1,7 +1,11 @@
-import { CheckCircle, Activity, Info } from 'lucide-react'
+import { CheckCircle, Activity, Info, Menu } from 'lucide-react'
 import { useLocation } from 'react-router-dom'
 
-export function Header() {
+interface HeaderProps {
+  onMenuClick?: () => void
+}
+
+export function Header({ onMenuClick }: HeaderProps) {
   const location = useLocation()
 
   const getTitle = () => {
@@ -19,18 +23,28 @@ export function Header() {
 
   return (
     <header className="bg-white border-b border-gray-200 shadow-sm">
-      <div className="px-6 py-3.5 flex items-center justify-between">
-        <div className="flex items-center gap-2.5">
+      <div className="px-4 sm:px-6 py-3.5 flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2.5 min-w-0">
+          {onMenuClick && (
+            <button
+              type="button"
+              onClick={onMenuClick}
+              className="lg:hidden p-2 -ml-1 hover:bg-gray-100 rounded-lg transition-colors"
+              aria-label="Open navigation"
+            >
+              <Menu className="w-5 h-5 text-gray-700" />
+            </button>
+          )}
           <div className="p-1.5 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-lg">
             <CheckCircle className="w-5 h-5 text-white" />
           </div>
-          <div>
-            <h1 className="text-lg font-semibold text-gray-900">{getTitle()}</h1>
-            <p className="text-xs text-gray-500">DevSecOps Repository Assessment</p>
+          <div className="min-w-0">
+            <h1 className="text-lg font-semibold text-gray-900 truncate">{getTitle()}</h1>
+            <p className="text-xs text-gray-500 truncate">DevSecOps Pipeline Assessment</p>
           </div>
         </div>
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1.5 px-3 py-1.5 bg-green-50 rounded-lg border border-green-200">
+        <div className="flex items-center gap-2 sm:gap-3">
+          <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-green-50 rounded-lg border border-green-200">
             <Activity className="w-3.5 h-3.5 text-green-600" />
             <span className="text-xs font-medium text-green-700">System Ready</span>
           </div>

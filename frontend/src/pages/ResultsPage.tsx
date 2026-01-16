@@ -63,7 +63,7 @@ export function ResultsPage() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto py-8 space-y-8">
+    <div className="max-w-6xl mx-auto py-6 sm:py-8 px-4 sm:px-6 space-y-8">
       {/* Animated Floating Modal that transforms to speedometer */}
       {isAnimating && (
         <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 backdrop-blur-sm animate-fadeIn">
@@ -72,9 +72,9 @@ export function ResultsPage() {
               <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-green-600 to-emerald-700 mb-6 shadow-lg">
                 <CheckCircle2 className="w-8 h-8 text-white" />
               </div>
-              <h3 className="text-2xl font-bold text-slate-900 mb-2">Assessment Complete!</h3>
-              <div className="text-6xl font-bold bg-gradient-to-r from-blue-600 to-indigo-700 bg-clip-text text-transparent mb-2">
-                {results.final_score.toFixed(1)}<span className="text-3xl">/100</span>
+              <h3 className="text-xl sm:text-2xl font-bold text-slate-900 mb-2">Assessment Complete!</h3>
+              <div className="text-5xl sm:text-6xl font-bold bg-gradient-to-r from-blue-600 to-indigo-700 bg-clip-text text-transparent mb-2">
+                {results.final_score.toFixed(1)}<span className="text-2xl sm:text-3xl">/100</span>
               </div>
               <p className="text-slate-600 font-semibold">{scoreLabel}</p>
             </div>
@@ -83,21 +83,21 @@ export function ResultsPage() {
       )}
       
       {/* Header */}
-      <div className="text-center">
-        <h1 className="text-4xl font-bold text-gray-900 mb-2">Assessment Complete!</h1>
-        <p className="text-gray-600">Here's your comprehensive repository governance analysis</p>
+      <div className="text-center px-2">
+        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-2">Assessment Complete!</h1>
+        <p className="text-sm sm:text-base text-gray-600">Here's your comprehensive repository governance analysis</p>
       </div>
 
       {/* Score Card */}
-      <div className={`rounded-xl p-8 border-l-8 ${scoreBgClass}`}>
-        <div className="flex items-center justify-between">
+      <div className={`rounded-xl p-5 sm:p-8 border-l-8 ${scoreBgClass}`}>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
           <div>
-            <h2 className="text-3xl font-bold text-gray-900 mb-2">Final Score</h2>
-            <p className="text-lg text-gray-600">Overall Repository Quality Assessment</p>
+            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Final Score</h2>
+            <p className="text-base sm:text-lg text-gray-600">Overall Repository Quality Assessment</p>
           </div>
           <div className="text-center">
-            <div className={`text-7xl font-bold ${scoreClass}`}>{results.final_score.toFixed(1)}</div>
-            <div className="text-2xl font-semibold text-gray-700">{scoreLabel}</div>
+            <div className={`text-5xl sm:text-6xl lg:text-7xl font-bold ${scoreClass}`}>{results.final_score.toFixed(1)}</div>
+            <div className="text-xl sm:text-2xl font-semibold text-gray-700">{scoreLabel}</div>
           </div>
         </div>
       </div>
@@ -105,7 +105,7 @@ export function ResultsPage() {
       <div className="grid md:grid-cols-1 gap-8">
 
         {/* Quality Score Display */}
-        <div className={`bg-gradient-to-br from-white to-indigo-50 border-2 border-indigo-200 rounded-2xl p-8 shadow-lg ${showFloatingScore ? 'animate-slideInRight' : ''}`}>
+        <div className={`bg-gradient-to-br from-white to-indigo-50 border-2 border-indigo-200 rounded-2xl p-5 sm:p-8 shadow-lg ${showFloatingScore ? 'animate-slideInRight' : ''}`}>
           <h1 className="text-2xl font-bold text-gray-900 mb-4 flex items-center justify-center gap-3">
             <div className="p-1 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-xl shadow-md">
               <Gauge className="w-8 h-8 text-white" />
@@ -115,7 +115,7 @@ export function ResultsPage() {
           
           {/* Simple Circular Progress */}
           <div className="flex items-center justify-center py-4">
-            <div className="relative w-64 h-64">
+            <div className="relative w-56 h-56 sm:w-64 sm:h-64">
               {/* Circular Progress Ring */}
               <svg className="w-full h-full transform -rotate-90" viewBox="0 0 200 200">
                 {/* Background Circle */}
@@ -143,7 +143,7 @@ export function ResultsPage() {
               
               {/* Score Display - Centered */}
               <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <div className={`text-6xl font-black ${scoreClass} mb-2`}>
+                <div className={`text-6xl font-black ${scoreClass} mb-1`}>
                   {results.final_score.toFixed(1)}
                 </div>
                 <div className="text-sm text-gray-500 font-semibold uppercase tracking-wider">
@@ -205,10 +205,10 @@ export function ResultsPage() {
 
       {/* Executive Summary */}
       {results.summary && (
-        <div className="bg-gradient-to-br from-white to-blue-50 border-2 border-blue-200 rounded-xl shadow-sm p-8">
+        <div className="bg-gradient-to-br from-white to-blue-50 border-2 border-blue-200 rounded-xl shadow-sm p-6 sm:p-8">
           <div className="flex items-center gap-3 mb-6 pb-4 border-b-2 border-blue-200">
             <div className="w-1 h-8 bg-gradient-to-b from-indigo-600 to-purple-600 rounded-full"></div>
-            <h3 className="text-2xl font-bold text-gray-900"> Executive Summary</h3>
+            <h3 className="text-xl sm:text-2xl font-bold text-gray-900"> Executive Summary</h3>
           </div>
           <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-100">
             <div className={`inline-block px-4 py-2 rounded-lg mb-4 ${scoreBgClass}`}>
@@ -377,24 +377,24 @@ export function ResultsPage() {
       )}
 
       {/* Info Message - Detailed Results Available via Email */}
-      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-xl p-6">
-        <div className="flex items-start gap-4">
+      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-xl p-4 sm:p-6">
+        <div className="flex flex-col sm:flex-row items-start gap-4">
           <div className="flex-shrink-0 p-3 bg-blue-600 rounded-lg">
-            <Mail className="w-6 h-6 text-white" />
+            <Mail className="w-5 sm:w-6 h-5 sm:h-6 text-white" />
           </div>
           <div className="flex-1">
-            <h3 className="text-xl font-bold text-gray-900 mb-2">View Detailed Question Analysis  {emailSent && (
+            <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-2">View Detailed Question Analysis  {emailSent && (
                   <span className="inline-flex items-center gap-1 px-3 py-1 bg-green-100 text-green-700 text-xs font-semibold rounded-full">
                     <Mail className="w-3 h-3" />
                     Email Sent
                   </span>
                 )}</h3> 
            
-            <p className="text-gray-700 mb-3">
+            <p className="text-sm sm:text-base text-gray-700 mb-3">
               Your complete assessment report with detailed question-by-question analysis has been sent to your email.
             </p>
-            <div className="bg-white border border-blue-200 rounded-lg p-4">
-              <p className="text-sm text-gray-600 mb-2">
+            <div className="bg-white border border-blue-200 rounded-lg p-3 sm:p-4">
+              <p className="text-xs sm:text-sm text-gray-600 mb-2">
                 <strong>Check your email</strong> for the full report link
               </p>
               <p className="text-sm text-gray-600">
@@ -406,13 +406,13 @@ export function ResultsPage() {
       </div>
             {/* Share URL Section */}
       {shareToken && (
-        <div className="bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-200 rounded-lg p-6">
-          <div className="flex items-start gap-4">
+        <div className="bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-200 rounded-lg p-4 sm:p-6">
+          <div className="flex flex-col sm:flex-row items-start gap-4">
             <div className="flex-shrink-0 p-3 bg-indigo-600 rounded-lg">
-              <Share2 className="w-6 h-6 text-white" />
+              <Share2 className="w-5 sm:w-6 h-5 sm:h-6 text-white" />
             </div>
-            <div className="flex-1">
-              <h3 className="text-xl font-bold text-gray-900 mb-2 flex items-center gap-2">
+            <div className="flex-1 w-full sm:w-auto">
+              <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-2 flex flex-wrap items-center gap-2">
                 Share Your Results
                 {emailSent && (
                   <span className="inline-flex items-center gap-1 px-3 py-1 bg-green-100 text-green-700 text-xs font-semibold rounded-full">
@@ -432,13 +432,13 @@ export function ResultsPage() {
                 </p>
               )}
               
-              <div className="flex gap-2">
-                <div className="flex-1 bg-white border border-gray-300 rounded-lg px-4 py-3 font-mono text-sm text-gray-700 overflow-x-auto">
+              <div className="flex flex-col sm:flex-row gap-2">
+                <div className="flex-1 bg-white border border-gray-300 rounded-lg px-3 sm:px-4 py-2 sm:py-3 font-mono text-xs sm:text-sm text-gray-700 overflow-x-auto break-all">
                   {window.location.origin}/shared/{shareToken}
                 </div>
                 <button
                   onClick={copyShareUrl}
-                  className={`flex items-center gap-2 px-4 py-3 rounded-lg font-semibold transition-all ${
+                  className={`flex items-center justify-center gap-2 px-4 py-2 sm:py-3 rounded-lg font-semibold transition-all whitespace-nowrap w-full sm:w-auto ${
                     copied
                       ? 'bg-green-600 text-white'
                       : 'bg-indigo-600 text-white hover:bg-indigo-700'

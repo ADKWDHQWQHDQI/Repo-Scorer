@@ -61,7 +61,7 @@ export function PlatformSelectionPage() {
   const isFormComplete = repositoryPlatform && cicdPlatform && deploymentPlatform
 
   return (
-    <div className="max-w-6xl mx-auto py-6 px-4">
+    <div className="max-w-6xl mx-auto py-6 sm:py-8 px-4 sm:px-6">
       {/* Header */}
       <div className="text-center mb-8">
         <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 mb-4 shadow-md">
@@ -77,11 +77,11 @@ export function PlatformSelectionPage() {
 
       {/* Progress Indicator */}
       <div className="mb-8">
-        <div className="flex items-center justify-center gap-3">
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
           <StepIndicator active={!!repositoryPlatform} label="Repository" />
-          <div className="w-16 h-0.5 bg-gray-300"></div>
+          <div className="hidden sm:block w-10 md:w-16 h-0.5 bg-gray-300" />
           <StepIndicator active={!!cicdPlatform} label="CI/CD" />
-          <div className="w-16 h-0.5 bg-gray-300"></div>
+          <div className="hidden sm:block w-10 md:w-16 h-0.5 bg-gray-300" />
           <StepIndicator active={!!deploymentPlatform} label="Deployment" />
         </div>
       </div>
@@ -97,7 +97,7 @@ export function PlatformSelectionPage() {
             <p className="text-xs text-gray-600">Where do you host your source code?</p>
           </div>
         </div>
-        <div className="grid md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           <PlatformCard
             icon={<Github className="w-8 h-8" />}
             name="GitHub"
@@ -144,7 +144,7 @@ export function PlatformSelectionPage() {
             <p className="text-xs text-gray-600">Which tool manages your continuous integration and delivery?</p>
           </div>
         </div>
-        <div className="grid md:grid-cols-5 gap-4">
+        <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
           <PlatformCard
             icon={<Github className="w-8 h-8" />}
             name="GitHub Actions"
@@ -199,7 +199,7 @@ export function PlatformSelectionPage() {
             <p className="text-xs text-gray-600">Where do you deploy your applications?</p>
           </div>
         </div>
-        <div className="grid md:grid-cols-5 gap-4">
+        <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
           <PlatformCard
             icon={<Cloud className="w-8 h-8" />}
             name="Azure"
@@ -244,7 +244,7 @@ export function PlatformSelectionPage() {
       </section>
 
       {/* Action Buttons */}
-      <div className="flex items-center justify-between pt-5 border-t border-gray-200">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-5 border-t border-gray-200">
         <button
           onClick={() => navigate('/')}
           className="inline-flex items-center gap-2 px-4 py-2.5 text-gray-600 font-medium text-sm rounded-lg hover:bg-gray-100 transition-colors"
@@ -254,7 +254,7 @@ export function PlatformSelectionPage() {
         <button
           onClick={handleContinue}
           disabled={!isFormComplete}
-          className="inline-flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold text-sm rounded-lg hover:from-blue-700 hover:to-indigo-700 disabled:from-gray-300 disabled:to-gray-400 disabled:cursor-not-allowed transition-all shadow-md hover:shadow-lg disabled:shadow-none"
+          className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold text-sm rounded-lg hover:from-blue-700 hover:to-indigo-700 disabled:from-gray-300 disabled:to-gray-400 disabled:cursor-not-allowed transition-all shadow-md hover:shadow-lg disabled:shadow-none"
         >
           Continue to Email
           <ArrowRight className="w-4 h-4" />

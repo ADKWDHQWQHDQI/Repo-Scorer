@@ -28,25 +28,25 @@ export function WelcomePage() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto py-6 px-4">
+    <div className="max-w-6xl mx-auto py-6 sm:py-8 px-4 sm:px-6">
       {/* Hero Section */}
       <div className="text-center mb-10">
         <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 mb-5 shadow-md">
           <Shield className="w-9 h-9 text-white" />
         </div>
-        <h1 className="text-4xl font-bold bg-gradient-to-r from-slate-900 via-blue-800 to-indigo-900 bg-clip-text text-transparent mb-3">
+        <h1 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-slate-900 via-blue-800 to-indigo-900 bg-clip-text text-transparent mb-3">
           DevSecOps Pipeline Assessment
         </h1>
-        <p className="text-lg text-gray-700 max-w-3xl mx-auto font-medium mb-2">
+        <p className="text-sm sm:text-base lg:text-lg text-gray-700 max-w-3xl mx-auto font-medium mb-2 px-4">
           AI-Powered Evaluation Platform for Modern Software Development
         </p>
-        <p className="text-sm text-gray-600 max-w-2xl mx-auto">
+        <p className="text-xs sm:text-sm text-gray-600 max-w-2xl mx-auto px-4">
           Comprehensive analysis of your repository governance, CI/CD maturity, code quality, and security posture
         </p>
       </div>
 
       {/* Platform Overview Section */}
-      <section className="mb-8 bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
+      <section className="mb-8 bg-white rounded-xl p-4 sm:p-5 lg:p-6 border border-gray-200 shadow-sm">
         <div className="flex items-center gap-2.5 mb-5">
           <div className="p-2.5 bg-blue-600 rounded-lg">
             <Target className="w-5 h-5 text-white" />
@@ -118,7 +118,7 @@ export function WelcomePage() {
       </section>
 
       {/* Assessment Deliverables Section */}
-      <section className="mb-8 bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
+      <section className="mb-8 bg-white rounded-xl p-5 sm:p-6 border border-gray-200 shadow-sm">
         <div className="flex items-center gap-2.5 mb-5">
           <div className="p-2.5 bg-indigo-600 rounded-lg">
             <FileText className="w-5 h-5 text-white" />
@@ -169,7 +169,7 @@ export function WelcomePage() {
       </section>
 
       {/* Assessment Workflow Section */}
-      <section className="mb-8 bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
+      <section className="mb-8 bg-white rounded-xl p-5 sm:p-6 border border-gray-200 shadow-sm">
         <div className="flex items-center gap-2.5 mb-5">
           <div className="p-2.5 bg-emerald-600 rounded-lg">
             <Zap className="w-5 h-5 text-white" />
@@ -179,7 +179,7 @@ export function WelcomePage() {
         <p className="text-gray-700 mb-6 text-sm">
           Our streamlined process ensures a thorough evaluation in under 10 minutes:
         </p>
-        <div className="grid md:grid-cols-4 gap-6">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
           <WorkflowStep
             number="1"
             title="Select Platform"
@@ -211,7 +211,7 @@ export function WelcomePage() {
       <div className="text-center py-8">
         <button
           onClick={handleGetStarted}
-          className="inline-flex items-center gap-2.5 px-8 py-3.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold text-base rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all shadow-md hover:shadow-lg"
+          className="inline-flex items-center gap-3 px-10 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold text-lg rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all shadow-md hover:shadow-lg"
         >
           Get Started
           <ArrowRight className="w-5 h-5" />

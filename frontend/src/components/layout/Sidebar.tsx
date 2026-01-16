@@ -1,9 +1,14 @@
-import { CheckCircle, Brain, Shield, TrendingUp, Info, Lightbulb, Target, Clock, Award, FileText } from 'lucide-react'
+import { CheckCircle, Brain, Shield, TrendingUp, Info, Lightbulb, Target, Clock, Award, FileText, Menu, X } from 'lucide-react'
 import { useLocation } from 'react-router-dom'
 import { useAssessmentStore } from '../../store/assessmentStore'
 import { formatToolName } from '../../lib/utils'
 
-export function Sidebar() {
+interface SidebarProps {
+  isOpen: boolean
+  onToggle: () => void
+}
+
+export function Sidebar({ isOpen, onToggle }: SidebarProps) {
   const location = useLocation()
   const { tool } = useAssessmentStore()
 
@@ -81,8 +86,19 @@ export function Sidebar() {
   const pageContent = getPageContent()
 
   return (
-    <aside className="w-80 bg-slate-900 border-r border-slate-700 min-h-screen p-6">
-      <div className="space-y-8">
+    <aside
+      className={`${isOpen ? 'w-80 max-w-[85vw]' : 'w-16'} bg-slate-900 border-r border-slate-700 min-h-screen h-full transition-all duration-300 relative flex flex-col`}
+    >
+      {/* Toggle Button */}
+      <button
+        onClick={onToggle}
+        className="absolute right-2 top-4 bg-slate-800 hover:bg-slate-700 text-slate-100 rounded-full p-2 shadow-lg border border-slate-600 z-10 transition-all duration-200 hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400"
+        aria-label={isOpen ? 'Close sidebar' : 'Open sidebar'}
+      >
+        {isOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+      </button>
+      
+      <div className={`flex-1 space-y-8 ${isOpen ? 'p-6 opacity-100' : 'p-2 opacity-0'} transition-opacity duration-300 overflow-y-auto`}>
         {/* Logo */}
         <div className="text-center py-4">
           <CheckCircle className="w-16 h-16 text-blue-400 mx-auto mb-3" />
@@ -117,13 +133,20 @@ export function Sidebar() {
           </div>
         </div>
 
+      
+      {/* Collapsed state icon */}
+      {!isOpen && (
+        <div className="flex justify-center pt-6">
+          <CheckCircle className="w-8 h-8 text-blue-400" />
+        </div>
+      )}
         <div className="h-px bg-slate-700" />
 
         {/* About */}
         <div className="text-center text-xs text-slate-500">
-          <p>Professional DevSecOps</p>
+          <p>DevSecOps</p>
           <p>Assessment Platform</p>
-          <p className="mt-4 text-slate-600">v1.0.0</p>
+          <p className="mt-4 text-slate-600">v1.0.2</p>
         </div>
       </div>
     </aside>
