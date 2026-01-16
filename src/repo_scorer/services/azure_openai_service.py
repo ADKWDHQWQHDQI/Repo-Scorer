@@ -1,11 +1,13 @@
 """Azure OpenAI service for LLM interactions"""
 
 import os
+import time
+import logging
 from typing import Optional
 from dotenv import load_dotenv
 
 try:
-    from openai import AzureOpenAI
+    from openai import AzureOpenAI, APIError, RateLimitError, APITimeoutError
 except ImportError:
     raise ImportError(
         "openai package not found. Please install: pip install openai"
@@ -13,6 +15,9 @@ except ImportError:
 
 # Load environment variables
 load_dotenv()
+
+# Setup logging
+logger = logging.getLogger(__name__)
 
 
 class AzureOpenAIService:
@@ -24,11 +29,15 @@ class AzureOpenAIService:
         endpoint: Optional[str] = None,
         deployment: Optional[str] = None,
         api_version: Optional[str] = None,
+        max_retries: int = 3,
+        timeout: int = 60,
     ):
         self.api_key = api_key or os.getenv("AZURE_OPENAI_API_KEY")
         self.endpoint = endpoint or os.getenv("AZURE_OPENAI_ENDPOINT", "https://reposcorer.cognitiveservices.azure.com/")
         self.deployment = deployment or os.getenv("AZURE_OPENAI_DEPLOYMENT", "gpt-4.1-mini")
         self.api_version = api_version or os.getenv("AZURE_OPENAI_API_VERSION", "2025-01-01-preview")
+        self.max_retries = max_retries
+        self.timeout = timeout
         
         if not self.api_key:
             raise ValueError("Azure OpenAI API key is required. Set AZURE_OPENAI_API_KEY environment variable.")
@@ -36,8 +45,54 @@ class AzureOpenAIService:
         self.client = AzureOpenAI(
             api_key=self.api_key,
             azure_endpoint=self.endpoint,
-            api_version=self.api_version
+            api_version=self.api_version,
+            timeout=self.timeout,
+            max_retries=0  # We handle retries manually with exponential backoff
         )
+    
+    def _retry_with_exponential_backoff(self, func, *args, **kwargs):
+        """
+        Retry a function with exponential backoff
+        
+        Args:
+            func: Function to retry
+            *args, **kwargs: Arguments to pass to the function
+            
+        Returns:
+            Function result
+            
+        Raises:
+            Last exception if all retries fail
+        """
+        last_exception = None
+        
+        for attempt in range(self.max_retries):
+            try:
+                return func(*args, **kwargs)
+            except (RateLimitError, APITimeoutError, APIError) as e:
+                last_exception = e
+                error_type = type(e).__name__
+                
+                if attempt < self.max_retries - 1:
+                    # Calculate backoff time: 1s, 2s, 4s, 8s
+                    backoff_time = 2 ** attempt
+                    logger.warning(
+                        f"Azure OpenAI API {error_type} (attempt {attempt + 1}/{self.max_retries}). "
+                        f"Retrying in {backoff_time}s..."
+                    )
+                    time.sleep(backoff_time)
+                else:
+                    logger.error(
+                        f"Azure OpenAI API {error_type} after {self.max_retries} attempts: {str(e)}"
+                    )
+            except Exception as e:
+                # For unexpected errors, don't retry
+                logger.error(f"Unexpected error calling Azure OpenAI: {str(e)}")
+                raise
+        
+        if last_exception:
+            raise last_exception
+        raise RuntimeError("All retry attempts failed without catching an exception")
 
     async def check_health(self) -> tuple[bool, bool]:
         """
@@ -48,14 +103,15 @@ class AzureOpenAIService:
         """
         try:
             # Try a simple completion to verify connectivity
-            response = self.client.chat.completions.create(
+            response = self._retry_with_exponential_backoff(
+                self.client.chat.completions.create,
                 model=self.deployment,
                 messages=[{"role": "user", "content": "Hello"}],
                 max_tokens=5
             )
             return True, True
         except Exception as e:
-            print(f"Azure OpenAI health check failed: {e}")
+            logger.error(f"Azure OpenAI health check failed: {e}")
             return False, False
     
     async def analyze_answer(self, question: str, answer: str, importance: float) -> str:
@@ -93,7 +149,8 @@ If NO:
 Focus on business value and technical impact. Be direct and specific."""
 
         try:
-            response = self.client.chat.completions.create(
+            response = self._retry_with_exponential_backoff(
+                self.client.chat.completions.create,
                 model=self.deployment,
                 messages=[
                     {"role": "system", "content": "You are a senior DevOps and repository governance expert with deep knowledge of CI/CD, security best practices, and software quality standards. Provide insights that are technically accurate, actionable, and business-focused. Avoid generic advice."},
@@ -106,8 +163,8 @@ Focus on business value and technical impact. Be direct and specific."""
             content = response.choices[0].message.content
             return content.strip() if content else "Analysis unavailable."
         except Exception as e:
-            print(f"Error analyzing answer: {e}")
-            return "Analysis unavailable."
+            logger.error(f"Error analyzing answer for question: {e}")
+            return f"Analysis temporarily unavailable due to service error."
     
     async def generate_comprehensive_summary(
         self, yes_answers: list, no_answers: list, total_score: float
@@ -192,7 +249,8 @@ Create a professional, executive-level assessment summary with these sections:
 Generate the comprehensive assessment report now:"""
 
         try:
-            response = self.client.chat.completions.create(
+            response = self._retry_with_exponential_backoff(
+                self.client.chat.completions.create,
                 model=self.deployment,
                 messages=[
                     {"role": "system", "content": "You are a principal DevOps consultant and repository governance expert who has assessed hundreds of enterprise development teams. You understand the business impact of technical practices. Your reports are known for being actionable, specific, and immediately valuable to engineering leadership. You never provide generic advice - every recommendation is concrete and implementation-focused."},
@@ -205,5 +263,5 @@ Generate the comprehensive assessment report now:"""
             content = response.choices[0].message.content
             return content.strip() if content else f"Assessment completed with score {total_score:.1f}/100. Review individual question insights for detailed analysis."
         except Exception as e:
-            print(f"Error generating summary: {e}")
-            return f"Assessment completed with score {total_score:.1f}/100. Review individual question insights for detailed analysis."
+            logger.error(f"Error generating summary: {e}")
+            return f"Assessment completed with score {total_score:.1f}/100. Detailed summary temporarily unavailable due to service error. Review individual question insights for analysis."
