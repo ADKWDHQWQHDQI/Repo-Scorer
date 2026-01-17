@@ -37,6 +37,8 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
+        "https://green-wave-03cc57a0f.1.azurestaticapps.net",
+        "https://green-wave-03cc57a0f-preview.eastus2.1.azurestaticapps.net",
         "https://red-pebble-019922c00.6.azurestaticapps.net",
         "http://localhost:5173",  # Local development
         "http://localhost:3000"   # Alternative local port
