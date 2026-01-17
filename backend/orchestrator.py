@@ -3,8 +3,8 @@
 import asyncio
 from typing import Dict, Optional
 
-from repo_scorer.services.azure_openai_service import AzureOpenAIService
-from repo_scorer.config import (
+from azure_openai_service import AzureOpenAIService
+from config import (
     RepositoryTool,
     get_questions_for_tool,
     get_all_questions,

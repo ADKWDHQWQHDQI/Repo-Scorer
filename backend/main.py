@@ -15,10 +15,10 @@ import uuid
 from datetime import datetime, timedelta
 from threading import Lock
 
-# Import repo_scorer modules (now in backend/repo_scorer/)
-from repo_scorer.orchestrator import AssessmentOrchestrator
-from repo_scorer.config import RepositoryTool, get_questions_for_tool
-from repo_scorer.models import QuestionResult, AssessmentResult
+# Import modules (now in backend root)
+from orchestrator import AssessmentOrchestrator
+from config import RepositoryTool, get_questions_for_tool
+from models import QuestionResult, AssessmentResult
 from database import get_db, UserEmail, AssessmentRecord, init_db
 from email_service import get_email_service
 import logging
@@ -330,11 +330,11 @@ async def save_email(request: SaveEmailRequest, db: Session = Depends(get_db)):
         if existing_email:
             # Update platform selections if provided
             if request.repository_platform:
-                existing_email.repository_platform = request.repository_platform
+                setattr(existing_email, 'repository_platform', request.repository_platform)
             if request.cicd_platform:
-                existing_email.cicd_platform = request.cicd_platform
+                setattr(existing_email, 'cicd_platform', request.cicd_platform)
             if request.deployment_platform:
-                existing_email.deployment_platform = request.deployment_platform
+                setattr(existing_email, 'deployment_platform', request.deployment_platform)
             
             db.commit()
             
