@@ -65,10 +65,8 @@ def check_database_connection():
         return False
 
 
-# Check database connection
-check_database_connection()
-
 # Create engine with Azure SQL specific settings
+# Note: Database connection is NOT checked at import time to prevent blocking startup
 engine = create_engine(
     DATABASE_URL,
     pool_pre_ping=True,

@@ -8,20 +8,14 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, EmailStr, field_validator
 from typing import Dict, Optional
-import sys
 import asyncio
-from pathlib import Path
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 import uuid
 from datetime import datetime, timedelta
 from threading import Lock
 
-# Add src directory to path
-src_path = Path(__file__).resolve().parent.parent / "src"
-if str(src_path) not in sys.path:
-    sys.path.insert(0, str(src_path))
-
+# Import repo_scorer modules (now in backend/repo_scorer/)
 from repo_scorer.orchestrator import AssessmentOrchestrator
 from repo_scorer.config import RepositoryTool, get_questions_for_tool
 from repo_scorer.models import QuestionResult, AssessmentResult
@@ -33,9 +27,6 @@ import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Initialize database on startup
-init_db()
-
 app = FastAPI(
     title="DevSecOps Assessment API",
     description="DevSecOps Repository Assessment API powered by Azure OpenAI",
@@ -43,13 +34,16 @@ app = FastAPI(
 )
 
 # CORS middleware - Allow frontend to access backend
-# Note: Wildcard origin for OPTIONS to handle preflight
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allow all origins for CORS preflight
-    allow_credentials=False,  # Set to False when using wildcard origin
-    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allow_headers=["*"],  # Allow all headers
+    allow_origins=[
+        "https://red-pebble-019922c00.6.azurestaticapps.net",
+        "http://localhost:5173",  # Local development
+        "http://localhost:3000"   # Alternative local port
+    ],
+    allow_credentials=False,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # In-memory storage for assessment sessions (use Redis in production)
@@ -204,6 +198,15 @@ async def periodic_cleanup_task():
 @app.on_event("startup")
 async def startup_event():
     """Start background tasks on application startup"""
+    # Initialize database tables (non-blocking - app will start even if DB fails)
+    try:
+        init_db()
+        logger.info("✅ Database initialized successfully")
+    except Exception as e:
+        logger.error(f"❌ Database initialization failed: {e}")
+        logger.warning("⚠️  App will continue running, but database features may not work")
+    
+    # Start background cleanup task
     asyncio.create_task(periodic_cleanup_task())
     logger.info("Application startup complete")
 
@@ -632,6 +635,7 @@ async def complete_assessment(request: CompleteAssessmentRequest, db: Session = 
         raise HTTPException(status_code=500, detail=str(e))
 
 
+# For local development only - Azure App Service will use uvicorn directly
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
