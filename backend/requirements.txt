@@ -1,0 +1,10 @@
+fastapi
+uvicorn[standard]
+gunicorn
+python-dotenv
+openai
+pydantic
+sqlalchemy
+pyodbc
+email-validator
+pydantic[email]
