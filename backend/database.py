@@ -43,7 +43,14 @@ def check_database_connection():
         
         # Check if we're connected
         cursor.execute("SELECT DB_NAME()")
-        db_name = cursor.fetchone()[0]
+        result = cursor.fetchone()
+        if result is None:
+            print("❌ Failed to retrieve database name")
+            cursor.close()
+            conn.close()
+            return False
+        
+        db_name = result[0]
         
         print(f"✅ Connected to database: {db_name}")
         
@@ -127,7 +134,7 @@ def init_db():
     """Initialize database tables"""
     try:
         Base.metadata.create_all(bind=engine)
-        print("✅ Database tables created successfully!")
+        print(" Database tables created successfully!")
         
         # Verify tables were created
         conn = pyodbc.connect(connection_string)
@@ -142,9 +149,9 @@ def init_db():
         
         tables = cursor.fetchall()
         if tables:
-            print(f"✅ Tables found: {[table[0] for table in tables]}")
+            print(f" Tables found: {[table[0] for table in tables]}")
         else:
-            print("⚠️  Tables may not have been created. Check permissions.")
+            print(" Tables may not have been created. Check permissions.")
         
         cursor.close()
         conn.close()

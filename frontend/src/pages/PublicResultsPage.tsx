@@ -22,7 +22,8 @@ export const PublicResultsPage = () => {
     const fetchResults = async () => {
       try {
         setLoading(true);
-        const response = await fetch(`http://localhost:8000/api/results/shared/${shareToken}`);
+        const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+        const response = await fetch(`${API_URL}/api/results/shared/${shareToken}`);
         
         if (!response.ok) {
           if (response.status === 404) {

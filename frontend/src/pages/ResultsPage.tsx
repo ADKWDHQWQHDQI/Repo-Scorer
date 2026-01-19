@@ -1,5 +1,5 @@
 import { useNavigate, useLocation } from 'react-router-dom'
-import { Home, CheckCircle2, Gauge, Copy, Check, Mail, Share2 } from 'lucide-react'
+import { Home, CheckCircle2, Gauge, Mail } from 'lucide-react'
 import { useAssessmentStore } from '../store/assessmentStore'
 import { getScoreLabel, getScoreClass, getScoreBgClass } from '../lib/utils'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
@@ -8,11 +8,10 @@ import { useState, useEffect } from 'react'
 export function ResultsPage() {
   const navigate = useNavigate()
   const location = useLocation()
-  const { results, reset, shareToken, emailSent, emailMessage } = useAssessmentStore()
+  const { results, reset, emailSent, emailMessage } = useAssessmentStore()
   const state = location.state as { showScoreAnimation?: boolean; animatedScore?: number } | null
   const [showFloatingScore, setShowFloatingScore] = useState(false)
   const [isAnimating, setIsAnimating] = useState(state?.showScoreAnimation ?? false)
-  const [copied, setCopied] = useState(false)
   
   // Scroll to top when component mounts
   useEffect(() => {
@@ -50,16 +49,6 @@ export function ResultsPage() {
   const handleReset = () => {
     reset()
     navigate('/')
-  }
-
-  const copyShareUrl = () => {
-    if (shareToken) {
-      const shareUrl = `${window.location.origin}/shared/${shareToken}`
-      navigator.clipboard.writeText(shareUrl).then(() => {
-        setCopied(true)
-        setTimeout(() => setCopied(false), 2000)
-      })
-    }
   }
 
   return (
@@ -376,95 +365,75 @@ export function ResultsPage() {
         </div>
       )}
 
-      {/* Info Message - Detailed Results Available via Email */}
-      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-xl p-4 sm:p-6">
-        <div className="flex flex-col sm:flex-row items-start gap-4">
-          <div className="flex-shrink-0 p-3 bg-blue-600 rounded-lg">
-            <Mail className="w-5 sm:w-6 h-5 sm:h-6 text-white" />
-          </div>
-          <div className="flex-1">
-            <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-2">View Detailed Question Analysis  {emailSent && (
-                  <span className="inline-flex items-center gap-1 px-3 py-1 bg-green-100 text-green-700 text-xs font-semibold rounded-full">
-                    <Mail className="w-3 h-3" />
-                    Email Sent
-                  </span>
-                )}</h3> 
-           
-            <p className="text-sm sm:text-base text-gray-700 mb-3">
-              Your complete assessment report with detailed question-by-question analysis has been sent to your email.
-            </p>
-            <div className="bg-white border border-blue-200 rounded-lg p-3 sm:p-4">
-              <p className="text-xs sm:text-sm text-gray-600 mb-2">
-                <strong>Check your email</strong> for the full report link
-              </p>
-              <p className="text-sm text-gray-600">
-                The email includes detailed analysis for each question with recommendations and insights
-              </p>
+      {/* Professional Results Notification Card */}
+      <div className="bg-gradient-to-br from-white via-blue-50 to-indigo-50 border-2 border-indigo-300 rounded-2xl shadow-lg overflow-hidden">
+        <div className="bg-gradient-to-r from-indigo-600 to-blue-600 px-6 py-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
+              <Mail className="w-6 h-6 text-white" />
+            </div>
+            <div className="flex-1">
+              <h3 className="text-xl font-bold text-white">Assessment Report Delivered</h3>
+              {emailSent && (
+                <div className="flex items-center gap-2 mt-1">
+                  <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                  <span className="text-sm text-green-100 font-medium">Successfully sent to your email</span>
+                </div>
+              )}
             </div>
           </div>
+        </div>
+        
+        <div className="p-6 sm:p-8 space-y-4">
+          {emailSent ? (
+            <>
+              <p className="text-base text-gray-800 leading-relaxed">
+                Your comprehensive assessment report has been delivered to your email inbox. Please check your email to access the full detailed report.
+              </p>
+              <div className="bg-white rounded-lg p-5 space-y-3 border border-indigo-100 shadow-sm">
+                <div className="flex items-start gap-3">
+                  <div className="w-1.5 h-1.5 bg-indigo-600 rounded-full mt-2"></div>
+                  <p className="text-sm text-gray-700">Detailed question-by-question analysis with explanations</p>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-1.5 h-1.5 bg-indigo-600 rounded-full mt-2"></div>
+                  <p className="text-sm text-gray-700">Personalized recommendations for improvement</p>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-1.5 h-1.5 bg-indigo-600 rounded-full mt-2"></div>
+                  <p className="text-sm text-gray-700">Actionable insights and next steps</p>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-1.5 h-1.5 bg-indigo-600 rounded-full mt-2"></div>
+                  <p className="text-sm text-gray-700">Shareable link valid for 48 hours</p>
+                </div>
+              </div>
+              <div className="bg-indigo-50 border border-indigo-200 rounded-lg px-4 py-3">
+                <p className="text-xs text-indigo-900 flex items-center gap-2">
+                  <svg className="w-4 h-4 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                  </svg>
+                  <span className="font-medium">Check your inbox:</span> The email contains a secure link to view your detailed results.
+                </p>
+              </div>
+            </>
+          ) : (
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-5">
+              <div className="flex items-start gap-3">
+                <svg className="w-5 h-5 text-amber-600 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+                <div>
+                  <p className="text-sm font-semibold text-amber-900 mb-1">Email Delivery Issue</p>
+                  <p className="text-sm text-amber-800">
+                    {emailMessage || 'We encountered an issue sending your report via email. Please contact support for assistance.'}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
-            {/* Share URL Section */}
-      {shareToken && (
-        <div className="bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-200 rounded-lg p-4 sm:p-6">
-          <div className="flex flex-col sm:flex-row items-start gap-4">
-            <div className="flex-shrink-0 p-3 bg-indigo-600 rounded-lg">
-              <Share2 className="w-5 sm:w-6 h-5 sm:h-6 text-white" />
-            </div>
-            <div className="flex-1 w-full sm:w-auto">
-              <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-2 flex flex-wrap items-center gap-2">
-                Share Your Results
-                {emailSent && (
-                  <span className="inline-flex items-center gap-1 px-3 py-1 bg-green-100 text-green-700 text-xs font-semibold rounded-full">
-                    <Mail className="w-3 h-3" />
-                    Email Sent
-                  </span>
-                )}
-              </h3>
-              
-              {emailSent ? (
-                <p className="text-sm text-gray-600 mb-4">
-                  A detailed report has been sent to your email with a shareable link. You can also copy the link below to share with your team.
-                </p>
-              ) : (
-                <p className="text-sm text-gray-600 mb-4">
-                  {emailMessage || 'Email could not be sent, but you can still share your results using the link below.'}
-                </p>
-              )}
-              
-              <div className="flex flex-col sm:flex-row gap-2">
-                <div className="flex-1 bg-white border border-gray-300 rounded-lg px-3 sm:px-4 py-2 sm:py-3 font-mono text-xs sm:text-sm text-gray-700 overflow-x-auto break-all">
-                  {window.location.origin}/shared/{shareToken}
-                </div>
-                <button
-                  onClick={copyShareUrl}
-                  className={`flex items-center justify-center gap-2 px-4 py-2 sm:py-3 rounded-lg font-semibold transition-all whitespace-nowrap w-full sm:w-auto ${
-                    copied
-                      ? 'bg-green-600 text-white'
-                      : 'bg-indigo-600 text-white hover:bg-indigo-700'
-                  }`}
-                >
-                  {copied ? (
-                    <>
-                      <Check className="w-5 h-5" />
-                      Copied!
-                    </>
-                  ) : (
-                    <>
-                      <Copy className="w-5 h-5" />
-                      Copy Link
-                    </>
-                  )}
-                </button>
-              </div>
-              
-              <p className="text-xs text-gray-500 mt-3">
-                 This link will remain active for 48 hours and can be accessed by anyone with the link.
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
       {/* Actions */}
       <div className="flex gap-4 justify-center pt-8">
         <button

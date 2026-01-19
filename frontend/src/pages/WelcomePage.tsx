@@ -208,7 +208,7 @@ export function WelcomePage() {
       </section>
 
       {/* Call to Action */}
-      <div className="text-center py-8">
+      <div className="text-center py-4">
         <button
           onClick={handleGetStarted}
           className="inline-flex items-center gap-3 px-10 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold text-lg rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all shadow-md hover:shadow-lg"
@@ -220,9 +220,9 @@ export function WelcomePage() {
           Begin your comprehensive DevSecOps assessment
         </p>
       </div>
-
+      
       {/* Trust Indicators */}
-      <div className="mt-12 pt-8 border-t border-gray-200">
+      <div className="mt-6 pt-4 border-t border-gray-200">
         <div className="grid md:grid-cols-4 gap-6 text-center">
           <TrustIndicator
             icon={<Lock className="w-6 h-6" />}
@@ -249,6 +249,7 @@ export function WelcomePage() {
     </div>
   )
 }
+
 
 // Component: Deliverable Card
 function DeliverableCard({

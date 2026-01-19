@@ -77,11 +77,11 @@ export function PlatformSelectionPage() {
 
       {/* Progress Indicator */}
       <div className="mb-8">
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+        <div className="flex flex-row items-center justify-center gap-2 sm:gap-3">
           <StepIndicator active={!!repositoryPlatform} label="Repository" />
-          <div className="hidden sm:block w-10 md:w-16 h-0.5 bg-gray-300" />
+          <div className="w-6 sm:w-10 md:w-16 h-0.5 bg-gray-300" />
           <StepIndicator active={!!cicdPlatform} label="CI/CD" />
-          <div className="hidden sm:block w-10 md:w-16 h-0.5 bg-gray-300" />
+          <div className="w-6 sm:w-10 md:w-16 h-0.5 bg-gray-300" />
           <StepIndicator active={!!deploymentPlatform} label="Deployment" />
         </div>
       </div>

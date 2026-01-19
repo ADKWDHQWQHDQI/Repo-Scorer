@@ -497,6 +497,8 @@ async def submit_answer(request: SubmitAnswerRequest):
             score=score,
             analysis=analysis
         )
+    except HTTPException:
+        raise  # Re-raise HTTP exceptions as-is
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -631,6 +633,8 @@ async def complete_assessment(request: CompleteAssessmentRequest, db: Session = 
             "email_sent": email_success,
             "email_message": email_message if not email_success else "Email sent successfully"
         }
+    except HTTPException:
+        raise  # Re-raise HTTP exceptions as-is
     except ValueError as e:
         raise HTTPException(status_code=400, detail=f"Invalid tool: {request.tool}")
     except Exception as e:

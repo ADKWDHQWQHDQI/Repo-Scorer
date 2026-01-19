@@ -95,14 +95,14 @@ export function EmailCapturePage() {
   }
 
   return (
-    <div className="min-h-[70vh] flex items-center justify-center px-4 py-4 sm:py-6">
+    <div className="h-[calc(100vh-80px)] flex items-center justify-center px-4 py-6">
       <div className="max-w-xl w-full">
         {/* Header Section */}
-        <div className="text-center mb-4 sm:mb-5">
-          <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gradient-to-br from-blue-600 to-indigo-700 mb-2.5 shadow-md">
+        <div className="text-center mb-4">
+          <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gradient-to-br from-blue-600 to-indigo-700 mb-2 shadow-md">
             <Sparkles className="w-6 h-6 text-white" />
           </div>
-          <h1 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-blue-900 via-blue-700 to-indigo-700 bg-clip-text text-transparent mb-1.5 sm:mb-2">
+          <h1 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-blue-900 via-blue-700 to-indigo-700 bg-clip-text text-transparent mb-1.5">
             One Final Step
           </h1>
           <p className="text-sm text-gray-600">
@@ -111,18 +111,18 @@ export function EmailCapturePage() {
         </div>
 
         {/* Main Card */}
-        <div className="bg-white rounded-xl p-5 sm:p-6 shadow-lg border border-gray-200">
+        <div className="bg-white rounded-xl p-4 sm:p-5 shadow-lg border border-gray-200">
           {/* Benefits Section */}
-          <div className="mb-4 sm:mb-5">
-            <h2 className="text-base sm:text-lg font-semibold text-gray-900 mb-2.5 sm:mb-3 flex items-center gap-2">
+          <div className="mb-4">
+            <h2 className="text-base sm:text-lg font-semibold text-gray-900 mb-2 flex items-center gap-2">
               <Mail className="w-5 h-5 text-blue-600" />
               What you'll receive
             </h2>
-            <div className="space-y-1.5 sm:space-y-2">
+            <div className="space-y-1.5">
               <div className="flex items-start gap-2">
                 <CheckCircle2 className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
                 <p className="text-sm text-gray-700">
-                  <strong>Comprehensive PDF report</strong> with scores and recommendations
+                  <strong>Comprehensive report</strong> with scores and recommendations
                 </p>
               </div>
               <div className="flex items-start gap-2">
@@ -141,7 +141,7 @@ export function EmailCapturePage() {
           </div>
 
           {/* Email Form */}
-          <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-3">
             <div>
               <label htmlFor="email" className="block text-sm font-semibold text-gray-900 mb-2">
                 Work Email Address
@@ -156,7 +156,7 @@ export function EmailCapturePage() {
                   value={email}
                   onChange={handleEmailChange}
                   placeholder="your.email@company.com"
-                  className={`block w-full pl-10 pr-4 py-2.5 sm:py-3 text-sm sm:text-base border rounded-lg focus:outline-none focus:ring-2 transition-all ${
+                  className={`block w-full pl-10 pr-4 py-2.5 text-sm sm:text-base border rounded-lg focus:outline-none focus:ring-2 transition-all ${
                     !isValid
                       ? 'border-red-400 focus:border-red-500 focus:ring-red-100'
                       : 'border-gray-300 focus:border-blue-500 focus:ring-blue-100'
@@ -173,7 +173,7 @@ export function EmailCapturePage() {
             </div>
 
             {/* Privacy Notice */}
-            <div className="bg-blue-50 rounded-lg p-2.5 sm:p-3 border border-blue-100">
+            <div className="bg-blue-50 rounded-lg p-2.5 border border-blue-100">
               <div className="flex items-start gap-2">
                 <Shield className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
                 <p className="text-xs text-gray-700">
@@ -183,7 +183,7 @@ export function EmailCapturePage() {
             </div>
 
             {/* Submit Button */}
-            <div className="flex gap-3 pt-1 sm:pt-2">
+            <div className="flex gap-3 pt-1">
               <button
                 type="button"
                 onClick={() => navigate('/platform-selection')}
@@ -213,7 +213,7 @@ export function EmailCapturePage() {
         </div>
 
         {/* Footer Note */}
-        <p className="text-center text-gray-500 mt-3 sm:mt-4 text-xs">
+        <p className="text-center text-gray-500 mt-3 text-xs">
           Assessment takes approximately <strong>5-10 minutes</strong>
         </p>
       </div>
