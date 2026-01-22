@@ -346,6 +346,37 @@ export const PublicResultsPage = () => {
           </div>
         </div>
 
+        {/* Contact Support Section */}
+        <div className="mt-8 mb-8">
+          <div className="bg-gradient-to-br from-indigo-600 via-purple-600 to-blue-600 rounded-2xl shadow-2xl p-8 text-center border-4 border-white">
+            <div className="flex justify-center mb-4">
+              <div className="bg-white rounded-full p-4 shadow-lg">
+                <Mail className="w-10 h-10 text-indigo-600" />
+              </div>
+            </div>
+            <h3 className="text-2xl sm:text-3xl font-bold text-white mb-3 drop-shadow-lg">
+              Need More Assistance?
+            </h3>
+            <p className="text-lg text-indigo-100 mb-5 font-medium">
+              Our DevOps team is here to help you improve your repository governance
+            </p>
+            <a
+              href="mailto:devops@ecanarys.com"
+              onClick={(e) => {
+                e.preventDefault();
+                window.location.href = 'mailto:devops@ecanarys.com';
+              }}
+              className="inline-flex items-center gap-3 bg-white text-indigo-600 font-bold text-lg px-8 py-4 rounded-full shadow-xl hover:shadow-2xl hover:bg-indigo-50 transition-all duration-300 cursor-pointer"
+            >
+              <Mail className="w-6 h-6" />
+              <span>devops@ecanarys.com</span>
+            </a>
+            <p className="text-sm text-indigo-200 mt-4 font-medium">
+              Click to send us an email directly
+            </p>
+          </div>
+        </div>
+
         {/* Footer CTA */}
         <div className="mt-8 text-center">
           <div className="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-lg p-6 sm:p-8 text-white">

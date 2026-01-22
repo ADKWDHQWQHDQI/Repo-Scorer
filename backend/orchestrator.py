@@ -6,7 +6,10 @@ from typing import Dict, Optional
 from azure_openai_service import AzureOpenAIService
 from config import (
     RepositoryTool,
+    CICDPlatform,
+    DeploymentPlatform,
     get_questions_for_tool,
+    get_questions_for_platforms,
     get_all_questions,
 )
 
@@ -14,18 +17,33 @@ from config import (
 class AssessmentOrchestrator:
     """Orchestrates the assessment flow"""
 
-    def __init__(self, tool: RepositoryTool, api_key: Optional[str] = None):
+    def __init__(
+        self, 
+        tool: RepositoryTool, 
+        cicd_platform: Optional[CICDPlatform] = None,
+        deployment_platform: Optional[DeploymentPlatform] = None,
+        api_key: Optional[str] = None
+    ):
         self.tool = tool
+        self.cicd_platform = cicd_platform
+        self.deployment_platform = deployment_platform
         self.ai_service = AzureOpenAIService(api_key=api_key)
         self.question_scores: Dict[str, float] = {}
         self.answer_analyses: Dict[str, str] = {}  # Store LLM analysis for each answer
         
-        # Load predefined questions for the selected tool
-        # Questions now have manual importance scores from config
-        self.pillars = get_questions_for_tool(tool)
+        # Load questions based on whether we have all three platforms or just repository
+        if cicd_platform and deployment_platform:
+            # New flow: 15 questions (5 per category)
+            self.pillars = get_questions_for_platforms(tool, cicd_platform, deployment_platform)
+            print(f"\n📋 Multi-platform assessment: {tool.value} + {cicd_platform.value} + {deployment_platform.value}")
+        else:
+            # Legacy flow: repository questions only
+            self.pillars = get_questions_for_tool(tool)
+            print(f"\n📋 Repository-only assessment: {tool.value}")
+        
         self.questions = get_all_questions(self.pillars)
         
-        print(f"\n📋 Loaded {len(self.questions)} questions with manual importance scores")
+        print(f"   Loaded {len(self.questions)} questions with manual importance scores")
         self._display_importance_summary()
     
     def _display_importance_summary(self) -> None:

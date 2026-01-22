@@ -1,4 +1,4 @@
-import { CheckCircle, Activity, Info, Menu } from 'lucide-react'
+import { CheckCircle, Menu } from 'lucide-react'
 import { useLocation } from 'react-router-dom'
 
 interface HeaderProps {
@@ -40,20 +40,8 @@ export function Header({ onMenuClick }: HeaderProps) {
           </div>
           <div className="min-w-0">
             <h1 className="text-lg font-semibold text-gray-900 truncate">{getTitle()}</h1>
-            <p className="text-xs text-gray-500 truncate">DevSecOps Pipeline Assessment</p>
+            <p className="text-xs text-gray-500 truncate">DevSecOps Assessment</p>
           </div>
-        </div>
-        <div className="flex items-center gap-2 sm:gap-3">
-          <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-green-50 rounded-lg border border-green-200">
-            <Activity className="w-3.5 h-3.5 text-green-600" />
-            <span className="text-xs font-medium text-green-700">System Ready</span>
-          </div>
-          <button 
-            className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors"
-            aria-label="Information"
-          >
-            <Info className="w-4 h-4 text-gray-500" />
-          </button>
         </div>
       </div>
     </header>

@@ -23,9 +23,20 @@ type DeploymentPlatform = 'azure' | 'aws' | 'gcp' | 'on_premise' | 'kubernetes'
 export function PlatformSelectionPage() {
   const navigate = useNavigate()
   const { setTool } = useAssessmentStore()
-  const [repositoryPlatform, setRepositoryPlatform] = useState<RepositoryPlatform | null>(null)
-  const [cicdPlatform, setCicdPlatform] = useState<CICDPlatform | null>(null)
-  const [deploymentPlatform, setDeploymentPlatform] = useState<DeploymentPlatform | null>(null)
+  
+  // Hydrate state from sessionStorage using lazy initialization
+  const [repositoryPlatform, setRepositoryPlatform] = useState<RepositoryPlatform | null>(() => {
+    const stored = sessionStorage.getItem('repository_platform')
+    return stored as RepositoryPlatform | null
+  })
+  const [cicdPlatform, setCicdPlatform] = useState<CICDPlatform | null>(() => {
+    const stored = sessionStorage.getItem('cicd_platform')
+    return stored as CICDPlatform | null
+  })
+  const [deploymentPlatform, setDeploymentPlatform] = useState<DeploymentPlatform | null>(() => {
+    const stored = sessionStorage.getItem('deployment_platform')
+    return stored as DeploymentPlatform | null
+  })
 
   // Scroll to top when component mounts
   useEffect(() => {
@@ -37,8 +48,7 @@ export function PlatformSelectionPage() {
     if (repositoryPlatform === 'github') return RepositoryTool.GITHUB
     if (repositoryPlatform === 'gitlab') return RepositoryTool.GITLAB
     if (repositoryPlatform === 'azure_repos') return RepositoryTool.AZURE_DEVOPS
-    // For Bitbucket, default to GitHub for now (you can extend the backend later)
-    if (repositoryPlatform === 'bitbucket') return RepositoryTool.GITHUB
+    if (repositoryPlatform === 'bitbucket') return RepositoryTool.BITBUCKET
     return null
   }
 
@@ -298,6 +308,7 @@ function PlatformCard({
   selected,
   onClick,
   color,
+  disabled = false,
 }: {
   icon: React.ReactNode
   name: string
@@ -305,42 +316,56 @@ function PlatformCard({
   selected: boolean
   onClick: () => void
   color: 'gray' | 'orange' | 'blue' | 'red' | 'green'
+  disabled?: boolean
 }) {
   const colorClasses = {
     gray: { 
       bg: 'bg-gray-700', 
       border: 'border-gray-600',
-      hover: 'hover:border-gray-500'
+      hover: 'hover:border-gray-500',
+      selectedBg: 'from-gray-50 to-gray-100'
     },
     orange: { 
       bg: 'bg-orange-600', 
       border: 'border-orange-600',
-      hover: 'hover:border-orange-500'
+      hover: 'hover:border-orange-500',
+      selectedBg: 'from-orange-50 to-orange-100'
     },
     blue: { 
       bg: 'bg-blue-600', 
       border: 'border-blue-600',
-      hover: 'hover:border-blue-500'
+      hover: 'hover:border-blue-500',
+      selectedBg: 'from-blue-50 to-indigo-50'
     },
     red: { 
       bg: 'bg-red-600', 
       border: 'border-red-600',
-      hover: 'hover:border-red-500'
+      hover: 'hover:border-red-500',
+      selectedBg: 'from-red-50 to-red-100'
     },
     green: { 
       bg: 'bg-green-600', 
       border: 'border-green-600',
-      hover: 'hover:border-green-500'
+      hover: 'hover:border-green-500',
+      selectedBg: 'from-green-50 to-green-100'
     },
   }
 
   return (
     <button
-      onClick={onClick}
-      className={`p-4 rounded-lg border-2 transition-all text-center hover:shadow-md ${
+      onClick={disabled ? undefined : onClick}
+      disabled={disabled}
+      aria-disabled={disabled}
+      aria-label={`${name} - ${description}${selected ? ' (selected)' : ''}${disabled ? ' (disabled)' : ''}`}
+      aria-pressed={selected}
+      className={`p-4 rounded-lg border-2 transition-all text-center ${
+        disabled 
+          ? 'opacity-50 cursor-not-allowed' 
+          : 'hover:shadow-md'
+      } ${
         selected
-          ? `${colorClasses[color].border} bg-gradient-to-br from-blue-50 to-indigo-50 shadow-md border-blue-500`
-          : `border-gray-200 bg-white hover:border-gray-300`
+          ? `${colorClasses[color].border} bg-gradient-to-br ${colorClasses[color].selectedBg} shadow-md`
+          : `border-gray-200 bg-white ${!disabled ? 'hover:border-gray-300' : ''}`
       }`}
     >
       <div

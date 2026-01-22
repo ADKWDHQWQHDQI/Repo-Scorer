@@ -4,9 +4,30 @@ export const RepositoryTool = {
   GITHUB: 'github',
   GITLAB: 'gitlab',
   AZURE_DEVOPS: 'azure_devops',
+  BITBUCKET: 'bitbucket',
 } as const;
 
 export type RepositoryTool = typeof RepositoryTool[keyof typeof RepositoryTool];
+
+export const CICDPlatform = {
+  GITHUB_ACTIONS: 'github_actions',
+  AZURE_PIPELINES: 'azure_pipelines',
+  GITLAB_CI: 'gitlab_ci',
+  JENKINS: 'jenkins',
+  CIRCLECI: 'circleci',
+} as const;
+
+export type CICDPlatform = typeof CICDPlatform[keyof typeof CICDPlatform];
+
+export const DeploymentPlatform = {
+  AZURE: 'azure',
+  AWS: 'aws',
+  GCP: 'gcp',
+  ON_PREMISE: 'on_premise',
+  KUBERNETES: 'kubernetes',
+} as const;
+
+export type DeploymentPlatform = typeof DeploymentPlatform[keyof typeof DeploymentPlatform];
 
 export interface Question {
   id: string
@@ -15,6 +36,8 @@ export interface Question {
   importance: number // 1-10 scale
   pillar: string // Pillar name
   pillar_id?: string // Pillar ID
+  description?: string // Two-line explanation of how the feature works
+  doc_url?: string // Official documentation URL for the feature
 }
 
 export interface Pillar {
@@ -71,6 +94,8 @@ export interface AssessmentState {
 // API Request/Response types
 export interface StartAssessmentRequest {
   tool: RepositoryTool
+  cicd_platform?: CICDPlatform
+  deployment_platform?: DeploymentPlatform
 }
 
 export interface StartAssessmentResponse {

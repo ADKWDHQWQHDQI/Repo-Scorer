@@ -5,6 +5,8 @@ import { useAssessmentStore } from '../store/assessmentStore'
 import { useQuery } from '@tanstack/react-query'
 import { assessmentService } from '../services/assessmentService'
 import { getImportanceLabel, getImportanceColor } from '../lib/utils'
+import { QuestionInfoButton } from '../components/QuestionInfoButton'
+import type { StartAssessmentRequest } from '../types'
 
 export function AssessmentPage() {
   const navigate = useNavigate()
@@ -21,10 +23,20 @@ export function AssessmentPage() {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }, [])
 
-  // Load questions from API
+  // Load questions from API with platform selections
   const { data: assessmentData, isLoading } = useQuery({
     queryKey: ['assessment', tool],
-    queryFn: () => assessmentService.startAssessment({ tool: tool! }),
+    queryFn: () => {
+      // Get platform selections from session storage
+      const cicdPlatform = sessionStorage.getItem('cicd_platform') || undefined
+      const deploymentPlatform = sessionStorage.getItem('deployment_platform') || undefined
+      
+      return assessmentService.startAssessment({ 
+        tool: tool!,
+        cicd_platform: cicdPlatform as StartAssessmentRequest['cicd_platform'],
+        deployment_platform: deploymentPlatform as StartAssessmentRequest['deployment_platform']
+      })
+    },
     enabled: !!tool,
   })
 
@@ -254,8 +266,8 @@ export function AssessmentPage() {
                 </div>
 
                 <div className="flex-1">
-                  {/* Priority Badge */}
-                  <div className="mb-2">
+                  <div className="flex items-start justify-between gap-2 mb-2">
+                    {/* Priority Badge */}
                     <span
                       className={`inline-block px-2.5 py-1 rounded-full text-xs font-semibold ${getImportanceColor(
                         question.importance
@@ -263,6 +275,12 @@ export function AssessmentPage() {
                     >
                       {getImportanceLabel(question.importance)} Priority
                     </span>
+                    
+                    {/* Info Button in top-right */}
+                    <QuestionInfoButton 
+                      description={question.description} 
+                      docUrl={question.doc_url} 
+                    />
                   </div>
 
                   {/* Question Text */}

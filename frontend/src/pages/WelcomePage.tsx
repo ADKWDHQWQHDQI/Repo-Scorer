@@ -35,7 +35,7 @@ export function WelcomePage() {
           <Shield className="w-9 h-9 text-white" />
         </div>
         <h1 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-slate-900 via-blue-800 to-indigo-900 bg-clip-text text-transparent mb-3">
-          DevSecOps Pipeline Assessment
+          DevSecOps Assessment
         </h1>
         <p className="text-sm sm:text-base lg:text-lg text-gray-700 max-w-3xl mx-auto font-medium mb-2 px-4">
           AI-Powered Evaluation Platform for Modern Software Development

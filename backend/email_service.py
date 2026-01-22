@@ -25,9 +25,19 @@ class EmailService:
     def _validate_config(self) -> tuple[bool, str]:
         """Validate email configuration"""
         if not self.sender_email:
-            return False, "SENDER_EMAIL not configured"
+            return False, (
+                "SENDER_EMAIL not configured in .env file. "
+                "Please set SENDER_EMAIL=your-email@gmail.com"
+            )
         if not self.sender_password:
-            return False, "SENDER_PASSWORD not configured"
+            return False, (
+                "SENDER_PASSWORD not configured in .env file. "
+                "For Gmail, you need an App Password:\n"
+                "1. Go to Google Account > Security > 2-Step Verification (enable it)\n"
+                "2. Go to Security > App passwords\n"
+                "3. Generate an app password for 'Mail'\n"
+                "4. Set SENDER_PASSWORD=your-16-char-password in .env"
+            )
         return True, "Configuration valid"
     
     def _format_summary_to_html(self, summary: str) -> str:
@@ -107,53 +117,119 @@ class EmailService:
             badge_text = "#991b1b"
         
         html = f"""
-<!DOCTYPE html>
-<html>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Your Repository Assessment Results</title>
+    <!--[if mso]>
+    <style type="text/css">
+        body, table, td {{font-family: Arial, sans-serif !important;}}
+    </style>
+    <![endif]-->
 </head>
-<body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f3f4f6;">
-    <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
-        <!-- Header -->
-        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; border-radius: 10px 10px 0 0; text-align: center;">
-            <h1 style="color: white; margin: 0; font-size: 28px;">Repository Assessment Complete</h1>
-            <p style="color: #e0e7ff; margin: 10px 0 0 0; font-size: 14px;">Your {platform} repository analysis is ready</p>
-        </div>
-        
-        <!-- Score Section -->
-        <div style="background-color: white; padding: 40px 30px; text-align: center; border-left: 1px solid #e5e7eb; border-right: 1px solid #e5e7eb;">
-            <div style="display: inline-block; padding: 30px 50px; background-color: {score_color}; border-radius: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
-                <h2 style="color: white; margin: 0; font-size: 56px; font-weight: bold;">{score:.1f}</h2>
-                <p style="color: white; margin: 8px 0 0 0; font-size: 14px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px;">out of 100</p>
-            </div>
-            <p style="color: #374151; margin: 20px 0 0 0; font-size: 18px; font-weight: 600;">{score_label}</p>
-        </div>
-        
-        <!-- Key Metrics -->
-        <div style="background-color: white; padding: 30px; border-left: 1px solid #e5e7eb; border-right: 1px solid #e5e7eb;">
-            <div style="display: inline-block; padding: 12px 24px; background-color: {badge_color}; border-radius: 8px; margin-bottom: 20px;">
-                <p style="color: {badge_text}; margin: 0; font-size: 14px; font-weight: bold;">Assessment Status: {score_label}</p>
-            </div>
-            <h3 style="margin: 0 0 20px 0; color: #111827; font-size: 20px; font-weight: bold; border-bottom: 2px solid #e5e7eb; padding-bottom: 10px;">Executive Summary</h3>
-            <div style="background-color: #f9fafb; padding: 20px; border-radius: 8px; border-left: 4px solid {score_color};">
-                {formatted_summary}
-            </div>
-        </div>
-        
-        <!-- CTA Button -->
-        <div style="background-color: white; padding: 30px; text-align: center; border-left: 1px solid #e5e7eb; border-right: 1px solid #e5e7eb; border-bottom: 1px solid #e5e7eb; border-radius: 0 0 10px 10px;">
-            <a href="{share_url}" style="display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-decoration: none; padding: 15px 40px; border-radius: 8px; font-weight: bold; font-size: 16px;">View Full Report</a>
-            <p style="color: #9ca3af; font-size: 12px; margin: 15px 0 0 0;">This link will expire in 48 hours</p>
-        </div>
-        
-        <!-- Footer -->
-        <div style="text-align: center; padding: 20px 0; color: #9ca3af; font-size: 12px;">
-            <p style="margin: 5px 0;">Repository Scorer - DevSecOps Assessment Platform</p>
-            <p style="margin: 5px 0;">You can share this report with your team using the link above</p>
-        </div>
-    </div>
+<body style="margin: 0; padding: 0; -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%;">
+    <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f3f4f6; margin: 0; padding: 0;">
+        <tr>
+            <td align="center" style="padding: 20px 15px;">
+                <!-- Main Container -->
+                <table border="0" cellpadding="0" cellspacing="0" width="600" style="max-width: 600px; width: 100%;">
+                    
+                    <!-- Header -->
+                    <tr>
+                        <td align="center" style="background-color: #667eea; padding: 30px 20px;">
+                            <h1 style="color: #ffffff; margin: 0; padding: 0; font-size: 28px; font-weight: bold; font-family: Arial, sans-serif; line-height: 1.2;">Repository Assessment Complete</h1>
+                            <p style="color: #e0e7ff; margin: 10px 0 0 0; padding: 0; font-size: 14px; font-family: Arial, sans-serif;">Your {platform} repository analysis is ready</p>
+                        </td>
+                    </tr>
+                    
+                    <!-- Score Section -->
+                    <tr>
+                        <td align="center" style="background-color: #ffffff; padding: 40px 20px;">
+                            <table border="0" cellpadding="0" cellspacing="0" width="200" style="background-color: {score_color}; border-radius: 12px;">
+                                <tr>
+                                    <td align="center" style="padding: 30px 20px;">
+                                        <h2 style="color: #ffffff; margin: 0; padding: 0; font-size: 56px; font-weight: bold; font-family: Arial, sans-serif; line-height: 1;">{score:.1f}</h2>
+                                        <p style="color: #ffffff; margin: 8px 0 0 0; padding: 0; font-size: 13px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; font-family: Arial, sans-serif;">OUT OF 100</p>
+                                    </td>
+                                </tr>
+                            </table>
+                            <p style="color: #374151; margin: 20px 0 0 0; padding: 0; font-size: 18px; font-weight: 600; font-family: Arial, sans-serif;">{score_label}</p>
+                        </td>
+                    </tr>
+                    
+                    <!-- Executive Summary -->
+                    <tr>
+                        <td style="background-color: #ffffff; padding: 30px 20px;">
+                            <!-- Status Badge -->
+                            <table border="0" cellpadding="0" cellspacing="0" style="margin-bottom: 20px;">
+                                <tr>
+                                    <td style="background-color: {badge_color}; padding: 12px 24px; border-radius: 6px;">
+                                        <p style="color: {badge_text}; margin: 0; padding: 0; font-size: 14px; font-weight: bold; font-family: Arial, sans-serif;">Assessment Status: {score_label}</p>
+                                    </td>
+                                </tr>
+                            </table>
+                            
+                            <h3 style="margin: 0 0 15px 0; padding: 0 0 10px 0; color: #111827; font-size: 20px; font-weight: bold; font-family: Arial, sans-serif; border-bottom: 2px solid #e5e7eb;">Executive Summary</h3>
+                            
+                            <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f9fafb; border-left: 4px solid {score_color};">
+                                <tr>
+                                    <td style="padding: 20px;">
+                                        {formatted_summary}
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                    
+                    <!-- CTA Button -->
+                    <tr>
+                        <td align="center" style="background-color: #ffffff; padding: 30px 20px;">
+                            <table border="0" cellpadding="0" cellspacing="0">
+                                <tr>
+                                    <td align="center" style="background-color: #667eea; border-radius: 6px;">
+                                        <a href="{share_url}" target="_blank" style="display: inline-block; color: #ffffff; text-decoration: none; padding: 15px 40px; font-weight: bold; font-size: 16px; font-family: Arial, sans-serif; border-radius: 6px;">View Full Report</a>
+                                    </td>
+                                </tr>
+                            </table>
+                            <p style="color: #9ca3af; font-size: 12px; margin: 15px 0 0 0; padding: 0; font-family: Arial, sans-serif;">This link will expire in 48 hours</p>
+                        </td>
+                    </tr>
+                    
+                    <!-- Contact Support Section -->
+                    <tr>
+                        <td align="center" style="background-color: #ffffff; padding: 20px;">
+                            <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #667eea; border-radius: 8px;">
+                                <tr>
+                                    <td align="center" style="padding: 25px 20px;">
+                                        <h3 style="margin: 0 0 10px 0; padding: 0; color: #ffffff; font-size: 20px; font-weight: bold; font-family: Arial, sans-serif;">Need More Assistance?</h3>
+                                        <p style="margin: 0 0 15px 0; padding: 0; color: #e0e7ff; font-size: 14px; font-family: Arial, sans-serif;">Our DevOps team is here to help you</p>
+                                        <table border="0" cellpadding="0" cellspacing="0">
+                                            <tr>
+                                                <td align="center" style="background-color: #ffffff; border-radius: 25px;">
+                                                    <a href="mailto:devops@ecanarys.com" style="display: inline-block; color: #667eea; text-decoration: none; padding: 12px 30px; font-weight: bold; font-size: 15px; font-family: Arial, sans-serif; border-radius: 25px;">📧 devops@ecanarys.com</a>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                    
+                    <!-- Footer -->
+                    <tr>
+                        <td align="center" style="padding: 20px; background-color: #f3f4f6;">
+                            <p style="margin: 5px 0; padding: 0; color: #9ca3af; font-size: 12px; font-family: Arial, sans-serif;">Repository Scorer - DevSecOps Assessment Platform</p>
+                            <p style="margin: 5px 0; padding: 0; color: #9ca3af; font-size: 12px; font-family: Arial, sans-serif;">You can share this report with your team using the link above</p>
+                        </td>
+                    </tr>
+                    
+                </table>
+            </td>
+        </tr>
+    </table>
 </body>
 </html>
         """

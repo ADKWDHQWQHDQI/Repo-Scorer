@@ -40,7 +40,16 @@ class AzureOpenAIService:
         self.timeout = timeout
         
         if not self.api_key:
-            raise ValueError("Azure OpenAI API key is required. Set AZURE_OPENAI_API_KEY environment variable.")
+            error_msg = (
+                "Azure OpenAI API key is required but not found.\n"
+                "Please set AZURE_OPENAI_API_KEY in your .env file.\n"
+                "For local development:\n"
+                "  1. Copy backend/.env.example to backend/.env\n"
+                "  2. Get your API key from Azure Portal > Azure OpenAI Service > Keys and Endpoint\n"
+                "  3. Set AZURE_OPENAI_API_KEY=your-key-here in .env file"
+            )
+            logger.error(error_msg)
+            raise ValueError(error_msg)
         
         self.client = AzureOpenAI(
             api_key=self.api_key,

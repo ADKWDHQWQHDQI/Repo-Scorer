@@ -8,6 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, EmailStr, field_validator
 from typing import Dict, Optional
+from contextlib import asynccontextmanager
 import asyncio
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
@@ -17,7 +18,7 @@ from threading import Lock
 
 # Import modules (now in backend root)
 from orchestrator import AssessmentOrchestrator
-from config import RepositoryTool, get_questions_for_tool
+from config import RepositoryTool, CICDPlatform, DeploymentPlatform, get_questions_for_tool
 from models import QuestionResult, AssessmentResult
 from database import get_db, UserEmail, AssessmentRecord, init_db
 from email_service import get_email_service
@@ -27,10 +28,35 @@ import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Lifespan event handler for startup and shutdown"""
+    # Startup
+    try:
+        init_db()
+        logger.info("✅ Database initialized successfully")
+    except Exception as e:
+        logger.error(f"❌ Database initialization failed: {e}")
+        logger.warning("⚠️  App will continue running, but database features may not work")
+    
+    # Start background cleanup task
+    asyncio.create_task(periodic_cleanup_task())
+    logger.info("Application startup complete")
+    
+    yield
+    
+    # Shutdown
+    global cleanup_task_running
+    cleanup_task_running = False
+    logger.info("Application shutting down")
+
+
 app = FastAPI(
     title="DevSecOps Assessment API",
     description="DevSecOps Repository Assessment API powered by Azure OpenAI",
-    version="1.0.0"
+    version="1.0.0",
+    lifespan=lifespan
 )
 
 # CORS middleware - Allow frontend to access backend
@@ -82,7 +108,9 @@ PERSONAL_EMAIL_DOMAINS = [
 
 # Request/Response Models
 class StartAssessmentRequest(BaseModel):
-    tool: str  # "github", "gitlab", "azure_devops"
+    tool: str  # "github", "gitlab", "azure_devops", "bitbucket"
+    cicd_platform: Optional[str] = None  # "github_actions", "azure_pipelines", "gitlab_ci", "jenkins", "circleci"
+    deployment_platform: Optional[str] = None  # "azure", "aws", "gcp", "on_premise", "kubernetes"
 
 
 class StartAssessmentResponse(BaseModel):
@@ -195,30 +223,6 @@ async def periodic_cleanup_task():
         logger.info("Background cleanup task cancelled")
     finally:
         cleanup_task_running = False
-
-
-@app.on_event("startup")
-async def startup_event():
-    """Start background tasks on application startup"""
-    # Initialize database tables (non-blocking - app will start even if DB fails)
-    try:
-        init_db()
-        logger.info("✅ Database initialized successfully")
-    except Exception as e:
-        logger.error(f"❌ Database initialization failed: {e}")
-        logger.warning("⚠️  App will continue running, but database features may not work")
-    
-    # Start background cleanup task
-    asyncio.create_task(periodic_cleanup_task())
-    logger.info("Application startup complete")
-
-
-@app.on_event("shutdown")
-async def shutdown_event():
-    """Cleanup on application shutdown"""
-    global cleanup_task_running
-    cleanup_task_running = False
-    logger.info("Application shutting down")
 
 
 @app.get("/")
@@ -394,8 +398,16 @@ async def start_assessment(request: StartAssessmentRequest):
         # Validate tool
         tool = RepositoryTool(request.tool)
         
-        # Create orchestrator
-        orchestrator = AssessmentOrchestrator(tool)
+        # Validate optional platforms
+        cicd_platform = CICDPlatform(request.cicd_platform) if request.cicd_platform else None
+        deployment_platform = DeploymentPlatform(request.deployment_platform) if request.deployment_platform else None
+        
+        # Create orchestrator with platform selections
+        orchestrator = AssessmentOrchestrator(
+            tool=tool,
+            cicd_platform=cicd_platform,
+            deployment_platform=deployment_platform
+        )
         
         # Check readiness
         is_ready, message = await orchestrator.check_readiness()
@@ -423,7 +435,9 @@ async def start_assessment(request: StartAssessmentRequest):
                 "max_score": question_obj.max_score,
                 "importance": question_obj.importance,
                 "pillar": pillar_name,
-                "pillar_id": pillar_id
+                "pillar_id": pillar_id,
+                "description": question_obj.description,
+                "doc_url": question_obj.doc_url
             })
         
         # Prepare pillars
@@ -477,6 +491,16 @@ async def submit_answer(request: SubmitAnswerRequest):
             session_data["last_accessed"] = datetime.utcnow()
             orchestrator = session_data["orchestrator"]
         
+        # Find the question object to get its max_score (properly weighted)
+        question_obj = None
+        for pillar_id, q, pillar_name in orchestrator.questions:
+            if q.id == request.question_id:
+                question_obj = q
+                break
+        
+        if not question_obj:
+            raise HTTPException(status_code=404, detail="Question not found in assessment")
+        
         # Analyze answer
         analysis = await orchestrator.analyze_answer(
             request.question_id,
@@ -485,9 +509,9 @@ async def submit_answer(request: SubmitAnswerRequest):
             request.importance
         )
         
-        # Determine classification and score
+        # Determine classification and score using the question's max_score (not importance!)
         classification = "yes" if request.answer.lower().strip() in ["yes", "y"] else "no"
-        score = request.importance if classification == "yes" else 0.0
+        score = question_obj.max_score if classification == "yes" else 0.0
         
         # Store score
         orchestrator.question_scores[request.question_id] = score
