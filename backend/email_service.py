@@ -185,15 +185,40 @@ class EmailService:
                     
                     <!-- CTA Button -->
                     <tr>
-                        <td align="center" style="background-color: #ffffff; padding: 30px 20px;">
-                            <table border="0" cellpadding="0" cellspacing="0">
+                        <td align="center" style="background-color: #ffffff; padding: 40px 20px 30px;">
+                            <!-- Divider Line -->
+                            <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-bottom: 25px;">
                                 <tr>
-                                    <td align="center" style="background-color: #667eea; border-radius: 6px;">
-                                        <a href="{share_url}" target="_blank" style="display: inline-block; color: #ffffff; text-decoration: none; padding: 15px 40px; font-weight: bold; font-size: 16px; font-family: Arial, sans-serif; border-radius: 6px;">View Full Report</a>
+                                    <td style="border-bottom: 2px solid #e5e7eb;"></td>
+                                </tr>
+                            </table>
+                            
+                            <table border="0" cellpadding="0" cellspacing="0" width="100%">
+                                <tr>
+                                    <td align="center" style="padding: 25px 30px; background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); border-radius: 12px; border: 2px solid #e2e8f0;">
+                                        <h3 style="margin: 0 0 12px 0; padding: 0; color: #1e293b; font-size: 18px; font-weight: 600; font-family: Arial, sans-serif;">Ready to Dive Deeper?</h3>
+                                        <p style="margin: 0 0 20px 0; padding: 0; color: #64748b; font-size: 14px; line-height: 1.5; font-family: Arial, sans-serif;">Access your comprehensive assessment report with detailed analysis, recommendations, and actionable insights.</p>
+                                        
+                                        <!-- View Full Report Link -->
+                                        <table border="0" cellpadding="0" cellspacing="0" style="margin-bottom: 15px;">
+                                            <tr>
+                                                <td align="center" style="padding: 18px 50px; border: 3px solid #667eea; border-radius: 8px; background-color: #ffffff;">
+                                                    <a href="{share_url}" target="_blank" style="display: inline-block; color: #667eea; text-decoration: none; font-weight: bold; font-size: 18px; font-family: Arial, sans-serif; letter-spacing: 0.5px;">VIEW FULL REPORT →</a>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                        
+                                        <!-- Expiry Notice -->
+                                        <table border="0" cellpadding="0" cellspacing="0">
+                                            <tr>
+                                                <td style="background-color: #fef3c7; padding: 10px 20px; border-radius: 6px; border-left: 4px solid #f59e0b;">
+                                                    <p style="color: #92400e; font-size: 12px; margin: 0; padding: 0; font-family: Arial, sans-serif; font-weight: 600;"> This secure link expires in 48 hours</p>
+                                                </td>
+                                            </tr>
+                                        </table>
                                     </td>
                                 </tr>
                             </table>
-                            <p style="color: #9ca3af; font-size: 12px; margin: 15px 0 0 0; padding: 0; font-family: Arial, sans-serif;">This link will expire in 48 hours</p>
                         </td>
                     </tr>
                     

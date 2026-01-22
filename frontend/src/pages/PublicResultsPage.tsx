@@ -286,19 +286,22 @@ export const PublicResultsPage = () => {
                 height={120}
                 interval={0}
               />
-              <YAxis label={{ value: 'Score (%)', angle: -90, position: 'insideLeft' }} />
+              <YAxis label={{ value: 'Percentage (%)', angle: -90, position: 'insideLeft' }} />
               <Tooltip
                 content={({ active, payload }) => {
                   if (active && payload && payload.length) {
                     const data = payload[0].payload;
+                    // Calculate percentage of total (out of 100 points)
+                    const earnedPercent = data.earned.toFixed(1);
+                    const maxPercent = data.max.toFixed(1);
                     return (
                       <div className="bg-white p-3 border border-gray-200 rounded shadow-lg">
                         <p className="font-semibold text-gray-900">{data.name}</p>
                         <p className="text-sm text-gray-600">
-                          Score: {data.earned.toFixed(2)} / {data.max.toFixed(2)}
+                          Achieved: <span className="font-semibold text-indigo-600">{earnedPercent}%</span> of total
                         </p>
-                        <p className="text-sm text-indigo-600 font-medium">
-                          {data.score.toFixed(1)}%
+                        <p className="text-sm text-gray-500">
+                          Max Possible: {maxPercent}% of total
                         </p>
                       </div>
                     );
@@ -338,7 +341,6 @@ export const PublicResultsPage = () => {
                 </div>
                 <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs sm:text-sm text-gray-600 mb-2">
                   <span className="font-medium">{result.pillar_name}</span>
-                  <span>Score: {result.score_earned.toFixed(2)} / {result.max_score.toFixed(2)}</span>
                 </div>
                 <p className="text-sm sm:text-base text-gray-700">{result.analysis}</p>
               </div>

@@ -97,7 +97,7 @@ GITHUB_QUESTIONS = [
 # Importance scale: 1-10 (1=low, 10=critical)
 GITLAB_QUESTIONS = [
     (
-        "Is two-factor authentication (2FA) required for all group members?",
+        "Is two-factor authentication (2FA) enabled for all group members?",
         8.0,
         "governance",
         "Two-factor authentication requires users to provide a second form of verification beyond their password, such as a mobile authenticator code. Enforcing 2FA across all group members significantly reduces the risk of account compromise and unauthorized access.",

@@ -173,20 +173,36 @@ export function ResultsPage() {
               stroke="#9ca3af"
             />
             <YAxis 
-              label={{ value: 'Score', angle: -90, position: 'insideLeft', style: { fontSize: 14, fill: '#6b7280' } }}
+              label={{ value: 'Percentage (%)', angle: -90, position: 'insideLeft', style: { fontSize: 14, fill: '#6b7280' } }}
               tick={{ fontSize: 12, fill: '#6b7280' }}
               stroke="#9ca3af"
             />
             <Tooltip 
-              contentStyle={{ backgroundColor: '#ffffff', border: '1px solid #e5e7eb', borderRadius: '8px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}
-              labelStyle={{ fontWeight: 'bold', color: '#111827', marginBottom: '8px' }}
+              content={({ active, payload, label }) => {
+                if (active && payload && payload.length) {
+                  const earnedData = payload[0];
+                  const maxData = payload[1];
+                  return (
+                    <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-lg">
+                      <p className="font-bold text-gray-900 mb-2">{label}</p>
+                      <p className="text-sm text-gray-600">
+                        Achieved: <span className="font-semibold text-indigo-600">{typeof earnedData.value === 'number' ? earnedData.value.toFixed(1) : earnedData.value}%</span> of total
+                      </p>
+                      <p className="text-sm text-gray-500">
+                        Max Possible: {typeof maxData.value === 'number' ? maxData.value.toFixed(1) : maxData.value}% of total
+                      </p>
+                    </div>
+                  );
+                }
+                return null;
+              }}
             />
             <Legend 
               wrapperStyle={{ paddingTop: '20px' }}
               iconType="rect"
             />
-            <Bar dataKey="earned" fill="#6366f1" name="Earned Score" radius={[8, 8, 0, 0]} />
-            <Bar dataKey="max" fill="#e5e7eb" name="Max Possible" radius={[8, 8, 0, 0]} />
+            <Bar dataKey="earned" fill="#6366f1" name="Achieved (%)" radius={[8, 8, 0, 0]} />
+            <Bar dataKey="max" fill="#e5e7eb" name="Max Possible (%)" radius={[8, 8, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
       </div>
