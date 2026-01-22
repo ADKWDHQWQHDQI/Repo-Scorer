@@ -29,21 +29,6 @@ export function WelcomePage() {
 
   return (
     <div className="max-w-6xl mx-auto py-6 sm:py-8 px-4 sm:px-6">
-      {/* Hero Section */}
-      <div className="text-center mb-10">
-        <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 mb-5 shadow-md">
-          <Shield className="w-9 h-9 text-white" />
-        </div>
-        <h1 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-slate-900 via-blue-800 to-indigo-900 bg-clip-text text-transparent mb-3">
-          DevSecOps Assessment
-        </h1>
-        <p className="text-sm sm:text-base lg:text-lg text-gray-700 max-w-3xl mx-auto font-medium mb-2 px-4">
-          AI-Powered Evaluation Platform for Modern Software Development
-        </p>
-        <p className="text-xs sm:text-sm text-gray-600 max-w-2xl mx-auto px-4">
-          Comprehensive analysis of your repository governance, CI/CD maturity, code quality, and security posture
-        </p>
-      </div>
 
       {/* Platform Overview Section */}
       <section className="mb-8 bg-white rounded-xl p-4 sm:p-5 lg:p-6 border border-gray-200 shadow-sm">

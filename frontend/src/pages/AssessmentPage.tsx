@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { CheckCircle2, Loader2, CheckSquare, Square, Sparkles, AlertCircle } from 'lucide-react'
 import { useAssessmentStore } from '../store/assessmentStore'
+import { useAssessmentProgressStore } from '../store/assessmentProgressStore'
 import { useQuery } from '@tanstack/react-query'
 import { assessmentService } from '../services/assessmentService'
 import { getImportanceLabel, getImportanceColor } from '../lib/utils'
@@ -11,6 +12,7 @@ import type { StartAssessmentRequest } from '../types'
 export function AssessmentPage() {
   const navigate = useNavigate()
   const { tool, setResults, setShareInfo } = useAssessmentStore()
+  const { setProgress } = useAssessmentProgressStore()
   
   const [questionAnswers, setQuestionAnswers] = useState<Record<string, 'yes' | 'no' | null>>({})
   const [sessionId, setSessionId] = useState<string>('')
@@ -51,7 +53,11 @@ export function AssessmentPage() {
   
   // Calculate progress
   const answeredCount = Object.values(questionAnswers).filter(a => a !== null).length
-  const progress = questions.length > 0 ? (answeredCount / questions.length) * 100 : 0
+
+  // Update progress store whenever answers change
+  useEffect(() => {
+    setProgress(answeredCount, questions.length)
+  }, [answeredCount, questions.length, setProgress])
 
   const handleAnswerChange = (questionId: string, answer: 'yes' | 'no') => {
     setQuestionAnswers(prev => ({
@@ -206,38 +212,6 @@ export function AssessmentPage() {
       )}
 
       <div className="max-w-5xl mx-auto py-6 sm:py-8 px-4 sm:px-6 pb-28">
-      {/* Header */}
-      <div className="text-center mb-6">
-        <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 mb-4 shadow-md">
-          <Sparkles className="w-7 h-7 text-white" />
-        </div>
-        <h1 className="text-3xl font-bold bg-gradient-to-r from-slate-900 via-blue-800 to-indigo-900 bg-clip-text text-transparent mb-2">
-          DevSecOps Assessment
-        </h1>
-        <p className="text-sm text-gray-600 max-w-2xl mx-auto">
-          Please answer all questions below. Select Yes or No for each question based on your current practices.
-        </p>
-      </div>
-
-      {/* Progress Bar */}
-      <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-200 mb-6">
-        <div className="flex justify-between items-center mb-3">
-          <div className="flex items-center gap-2">
-            <CheckCircle2 className="w-5 h-5 text-blue-600" />
-            <span className="text-sm font-semibold text-gray-900">
-              Progress: {answeredCount} of {questions.length} answered
-            </span>
-          </div>
-          <span className="text-sm font-semibold text-blue-600">{Math.round(progress)}%</span>
-        </div>
-        <div className="w-full bg-gray-200 rounded-full h-2.5">
-          <div
-            className="bg-gradient-to-r from-blue-500 to-indigo-600 h-2.5 rounded-full transition-all duration-300"
-            style={{ width: `${progress}%` }}
-          />
-        </div>
-      </div>
-
       {/* Questions Form */}
       <div className="space-y-4 mb-6">
         {questions.map((question, index) => {
@@ -285,7 +259,7 @@ export function AssessmentPage() {
 
                   {/* Question Text */}
                   <h3 className="text-base font-semibold text-gray-900 mb-3">
-                    {question.text}
+                    <span className="text-gray-500 font-medium">Question {index + 1}:</span> {question.text}
                   </h3>
 
                   {/* Yes/No Options */}

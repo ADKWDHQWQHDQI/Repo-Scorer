@@ -129,7 +129,7 @@ GITLAB_QUESTIONS = [
         8.0,
         "code_review",
         "Protected branches restrict who can push commits directly or merge changes into important branches like main or production. This prevents accidental or unauthorized modifications to your critical codebase.",
-        "https://docs.gitlab.com/ee/user/project/protected_branches.html"
+        "https://docs.gitlab.com/user/project/repository/branches/protected/#push-and-merge-permissions"
     ),
 ]
 

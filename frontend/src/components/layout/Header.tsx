@@ -1,5 +1,5 @@
-import { CheckCircle, Menu } from 'lucide-react'
-import { useLocation } from 'react-router-dom'
+import { CheckCircle, Menu, ArrowRight } from 'lucide-react'
+import { useLocation, useNavigate } from 'react-router-dom'
 
 interface HeaderProps {
   onMenuClick?: () => void
@@ -7,6 +7,7 @@ interface HeaderProps {
 
 export function Header({ onMenuClick }: HeaderProps) {
   const location = useLocation()
+  const navigate = useNavigate()
 
   const getTitle = () => {
     switch (location.pathname) {
@@ -43,6 +44,15 @@ export function Header({ onMenuClick }: HeaderProps) {
             <p className="text-xs text-gray-500 truncate">DevSecOps Assessment</p>
           </div>
         </div>
+        {location.pathname === '/' && (
+          <button
+            onClick={() => navigate('/platform-selection')}
+            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold text-sm rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all shadow-md hover:shadow-lg"
+          >
+            Get Started
+            <ArrowRight className="w-4 h-4" />
+          </button>
+        )}
       </div>
     </header>
   )

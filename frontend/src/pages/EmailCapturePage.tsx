@@ -7,7 +7,17 @@ const PERSONAL_EMAIL_DOMAINS = [
   'gmail.com', 'yahoo.com', 'hotmail.com', 'outlook.com',
   'aol.com', 'icloud.com', 'mail.com', 'protonmail.com',
   'zoho.com', 'yandex.com', 'gmx.com', 'live.com',
-  'msn.com', 'rediffmail.com', 'inbox.com'
+  'msn.com', 'rediffmail.com', 'inbox.com', '163.com', 'qq.com',
+  'naver.com', 'daum.net', 'seznam.cz', 'tutanota.com',
+  // Test and fake email domains
+  'test.com', 'test123.com', 'example.com', 'example.org', 
+  'example.net', 'testxyz.com', 'myemail.com', 'email.com',
+  'xyz.com', 'abc.com', 'demo.com', 'sample.com',
+  // Temporary/disposable email domains
+  'tempmail.com', 'disposablemail.com', 'fakeemail.com',
+  'mailinator.com', 'throwawaymail.com', '10minutemail.com',
+  'guerrillamail.com', 'maildrop.cc', 'getnada.com',
+  'trashmail.com', 'yopmail.com'
 ]
 
 export function EmailCapturePage() {
@@ -23,35 +33,65 @@ export function EmailCapturePage() {
   }, [])
 
   const validateEmail = (email: string): { valid: boolean; error: string } => {
+    // Basic format validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     
+    if (!email || email.trim() === '') {
+      return { valid: false, error: 'Email address is required' }
+    }
+    
     if (!emailRegex.test(email)) {
+      return { valid: false, error: 'Please enter a valid email address format (e.g., name@company.com)' }
+    }
+    
+    const domain = email.split('@')[1]?.toLowerCase()
+    
+    if (!domain) {
       return { valid: false, error: 'Please enter a valid email address' }
     }
     
-    const domain = email.split('@')[1].toLowerCase()
+    // Check against blocked domains
     if (PERSONAL_EMAIL_DOMAINS.includes(domain)) {
       return { 
         valid: false, 
-        error: 'Personal email addresses are not allowed. Please use your work email.' 
+        error: 'Personal, test, or temporary email addresses are not allowed. Please use your work email address.' 
       }
     }
     
-    return { valid: true, error: '' }
-  }
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    
-    const validation = validateEmail(email)
-    
-    if (!validation.valid) {
-      setIsValid(false)
-      setErrorMessage(validation.error)
-      return
+      // Additional validation: check for suspicious patterns
+      const suspiciousPatterns = [
+        /^test/i,           // starts with "test"
+        /test$/i,           // ends with "test"
+        /fake/i,            // contains "fake"
+        /sample/i,          // contains "sample"
+        /demo/i             // contains "demo"
+      ]
+      
+      if (suspiciousPatterns.some(pattern => email.match(pattern))) {
+        return { 
+          valid: false, 
+          error: 'Test or temporary email addresses are not allowed. Please use your work email address.' 
+        }
+      }
+      
+      return { valid: true, error: '' }
     }
-    
-    setIsSubmitting(true)
+  
+    const handleSubmit = async (e: React.FormEvent) => {
+      e.preventDefault()
+      
+      // Validate email first
+      const validation = validateEmail(email)
+      
+      if (!validation.valid) {
+        setIsValid(false)
+        setErrorMessage(validation.error)
+        return
+      }
+      
+      setIsValid(true)
+      setErrorMessage('')
+      setIsSubmitting(true)
     
     try {
       // Get platform selections from session storage
@@ -61,7 +101,7 @@ export function EmailCapturePage() {
       
       // Save email to database
       const response = await api.post('/api/email/save', {
-        email,
+        email: email.trim().toLowerCase(),
         repository_platform: repositoryPlatform,
         cicd_platform: cicdPlatform,
         deployment_platform: deploymentPlatform
@@ -69,17 +109,40 @@ export function EmailCapturePage() {
       
       if (response.data.success) {
         // Store email in session storage
-        sessionStorage.setItem('user_email', email)
+        sessionStorage.setItem('user_email', email.trim().toLowerCase())
         setIsValid(true)
         navigate('/assessment')
-      }
-    } catch (error) {
-      setIsValid(false)
-      const err = error as { response?: { data?: { detail?: string } } }
-      if (err.response?.data?.detail) {
-        setErrorMessage(err.response.data.detail)
       } else {
+        throw new Error('Failed to save email')
+      }
+    } catch (error: unknown) {
+      console.error('Email submission error:', error)
+      setIsValid(false)
+      
+      // Enhanced error handling
+      if (error && typeof error === 'object' && 'response' in error) {
+        const axiosError = error as { response?: { data?: { detail?: string | Array<{ msg?: string }> }; status?: number } }
+        if (axiosError.response?.data?.detail) {
+          // Backend validation error
+          const detail = axiosError.response.data.detail
+          if (typeof detail === 'string') {
+            setErrorMessage(detail)
+          } else if (Array.isArray(detail) && detail.length > 0) {
+            setErrorMessage(detail[0].msg || 'Invalid email address')
+          } else {
+            setErrorMessage('Personal or temporary email addresses are not allowed. Please use your work email.')
+          }
+        } else if (axiosError.response?.status === 400) {
+          setErrorMessage('Invalid email address. Please use your work email.')
+        } else if ('message' in error && typeof error.message === 'string') {
+          setErrorMessage('Failed to save email. Please try again.')
+        } else {
+          setErrorMessage('An error occurred. Please check your email and try again.')
+        }
+      } else if (error instanceof Error) {
         setErrorMessage('Failed to save email. Please try again.')
+      } else {
+        setErrorMessage('An error occurred. Please check your email and try again.')
       }
     } finally {
       setIsSubmitting(false)
