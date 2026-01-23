@@ -3,7 +3,7 @@ FastAPI Backend for DevSecOps Assessment
 Exposes Python orchestrator as REST API for React frontend
 """
 
-from fastapi import FastAPI, HTTPException, Depends
+from fastapi import FastAPI, HTTPException, Depends, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, EmailStr, field_validator
@@ -15,6 +15,8 @@ from sqlalchemy.exc import IntegrityError
 import uuid
 from datetime import datetime, timedelta
 from threading import Lock
+import base64
+import urllib.parse
 
 # Import modules (now in backend root)
 from orchestrator import AssessmentOrchestrator
@@ -259,8 +261,12 @@ async def health_check():
 
 
 @app.get("/api/results/shared/{share_token}")
-async def get_shared_results(share_token: str):
-    """Retrieve assessment results by share token (public endpoint)"""
+async def get_shared_results(
+    share_token: str,
+    email: Optional[str] = Query(None, description="Encoded email for click tracking"),
+    db: Session = Depends(get_db)
+):
+    """Retrieve assessment results by share token (public endpoint) and track email clicks"""
     try:
         # Clean up expired entries first
         _cleanup_expired_cache()
@@ -282,6 +288,26 @@ async def get_shared_results(share_token: str):
                 status_code=404,
                 detail="Results have expired. Shared links are valid for 48 hours."
             )
+        
+        # Track email click if email parameter is provided
+        if email:
+            try:
+                # Decode the email
+                decoded_email = base64.urlsafe_b64decode(urllib.parse.unquote(email)).decode()
+                logger.info(f"Tracking report view for email: {decoded_email}")
+                
+                # Update user_emails record to mark report as viewed
+                user_email = db.query(UserEmail).filter(UserEmail.email == decoded_email).first()
+                if user_email and not user_email.report_viewed:
+                    user_email.report_viewed = True
+                    user_email.viewed_at = datetime.utcnow()
+                    db.commit()
+                    logger.info(f"✅ Marked report as viewed for: {decoded_email}")
+                elif user_email and user_email.report_viewed:
+                    logger.info(f"ℹ️ Report already marked as viewed for: {decoded_email}")
+            except Exception as e:
+                logger.warning(f"Failed to track email click: {e}")
+                # Don't fail the request if tracking fails
         
         # Return results with metadata
         return {

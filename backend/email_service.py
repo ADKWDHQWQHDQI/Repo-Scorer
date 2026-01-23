@@ -8,6 +8,8 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from typing import Optional
 import logging
+import base64
+import urllib.parse
 
 logger = logging.getLogger(__name__)
 
@@ -39,6 +41,11 @@ class EmailService:
                 "4. Set SENDER_PASSWORD=your-16-char-password in .env"
             )
         return True, "Configuration valid"
+    
+    def _encode_email(self, email: str) -> str:
+        """Encode email address for URL parameter"""
+        encoded = base64.urlsafe_b64encode(email.encode()).decode()
+        return urllib.parse.quote(encoded)
     
     def _format_summary_to_html(self, summary: str) -> str:
         """Convert markdown-style summary to clean HTML"""
@@ -289,8 +296,9 @@ class EmailService:
                 logger.error(f"Email configuration error: {error_msg}")
                 return False, f"Email configuration error: {error_msg}"
             
-            # Create share URL
-            share_url = f"{self.base_url}/shared/{share_token}"
+            # Create share URL with encoded email for click tracking
+            encoded_email = self._encode_email(recipient_email)
+            share_url = f"{self.base_url}/shared/{share_token}?email={encoded_email}"
             
             # Create message
             msg = MIMEMultipart('alternative')

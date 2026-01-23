@@ -97,6 +97,8 @@ class UserEmail(Base):
     email = Column(String(255), unique=True, index=True, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     is_active = Column(Boolean, default=True, nullable=False)
+    report_viewed = Column(Boolean, default=False, nullable=False)
+    viewed_at = Column(DateTime, nullable=True)
     
     # Platform selections
     repository_platform = Column(String(100), nullable=True)
