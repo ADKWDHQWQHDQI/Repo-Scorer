@@ -258,8 +258,7 @@ export function AssessmentPage() {
                   </div>
 
                   {/* Question Text */}
-                  <h3 className="text-base font-semibold text-gray-900 mb-3">
-                    <span className="text-gray-500 font-medium">Question {index + 1}:</span> {question.text}
+                  <h3 className="text-base font-semibold text-gray-900 mb-3">{question.text}
                   </h3>
 
                   {/* Yes/No Options */}

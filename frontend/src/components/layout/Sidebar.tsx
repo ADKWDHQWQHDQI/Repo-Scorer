@@ -1,4 +1,4 @@
-import { CheckCircle, Brain, Shield, TrendingUp, Info, Lightbulb, Target, Clock, Award, FileText, Menu, X, CheckCircle2 } from 'lucide-react'
+import { CheckCircle, Brain, Shield, TrendingUp, Info, Lightbulb, Target, Clock, Award, FileText, PanelLeftClose, PanelLeft, CheckCircle2 } from 'lucide-react'
 import { useLocation } from 'react-router-dom'
 import { useAssessmentProgressStore } from '../../store/assessmentProgressStore'
 
@@ -90,13 +90,19 @@ export function Sidebar({ isOpen, onToggle }: SidebarProps) {
     <aside
       className={`${isOpen ? 'w-80 max-w-[85vw]' : 'w-16'} bg-slate-900 border-r border-slate-700 sticky top-0 h-screen overflow-hidden transition-all duration-300 relative flex flex-col`}
     >
-      {/* Toggle Button */}
+      {/* Toggle Button - Microsoft Copilot Style */}
       <button
         onClick={onToggle}
-        className="absolute right-2 top-4 bg-slate-800 hover:bg-slate-700 text-slate-100 rounded-full p-2 shadow-lg border border-slate-600 z-10 transition-all duration-200 hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400"
+        className={`absolute top-4 bg-transparent hover:bg-slate-800/50 text-slate-300 hover:text-white p-2.5 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 z-20 ${
+          isOpen ? 'right-0 rounded-l-lg' : 'left-1/2 -translate-x-1/2 rounded-lg'
+        }`}
         aria-label={isOpen ? 'Close sidebar' : 'Open sidebar'}
       >
-        {isOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+        {isOpen ? (
+          <PanelLeftClose className="w-5 h-5" />
+        ) : (
+          <PanelLeft className="w-5 h-5" />
+        )}
       </button>
       
       <div className={`flex-1 space-y-8 ${isOpen ? 'p-6 opacity-100' : 'p-2 opacity-0'} transition-opacity duration-300 overflow-hidden`}>
