@@ -56,7 +56,7 @@ class Pillar:
 # Importance scale: 1-10 (1=low, 10=critical)
 GITHUB_QUESTIONS = [
     (
-        "Is MFA (Multi-Factor Authentication) required for all organization members?",
+        "Is MFA (Multi-Factor Authentication) enabled for all organization members?",
         8.0,
         "governance",
         "Multi-Factor Authentication adds an extra layer of security by requiring users to provide two or more verification factors to access their GitHub account. This helps prevent unauthorized access even if passwords are compromised.",
@@ -138,7 +138,7 @@ GITLAB_QUESTIONS = [
 # Importance scale: 1-10 (1=low, 10=critical)
 AZURE_DEVOPS_QUESTIONS = [
     (
-        "Is multi-factor authentication (MFA) required for all users?",
+        "Is multi-factor authentication (MFA) enabled for all users?",
         8.0,
         "governance",
         "Multi-factor authentication adds an additional security layer by requiring users to verify their identity through a second method beyond passwords. Azure DevOps integrates with Azure AD conditional access policies to enforce MFA organization-wide.",
@@ -179,7 +179,7 @@ AZURE_DEVOPS_QUESTIONS = [
 # Importance scale: 1-10 (1=low, 10=critical)
 BITBUCKET_QUESTIONS = [
     (
-        "Is two-step verification required for all workspace members?",
+        "Is two-step verification enabled for all workspace members?",
         8.0,
         "governance",
         "Two-step verification adds a second layer of security by requiring workspace members to confirm their identity through an authenticator app or SMS. Enforcing this reduces the risk of unauthorized access even when passwords are compromised.",
@@ -354,7 +354,7 @@ JENKINS_QUESTIONS = [
         "https://www.jenkins.io/doc/book/security/controller-isolation/"
     ),
     (
-        "Are pipeline approvals required before deploying to production?",
+        "Are pipeline approvals enabled before deploying to production?",
         7.0,
         "cicd_quality",
         "Input steps and approval gates in Jenkins pipelines require manual confirmation before proceeding with production deployments. This human checkpoint ensures changes are intentionally released and provides accountability for production modifications.",
