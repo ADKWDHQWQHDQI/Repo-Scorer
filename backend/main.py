@@ -1,5 +1,5 @@
 """
-FastAPI Backend for DevSecOps Assessment
+FastAPI Backend for DevSecOps Maturity Assessment
 Exposes Python orchestrator as REST API for React frontend
 """
 
@@ -55,7 +55,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="DevSecOps Assessment API",
+    title="DevSecOps Maturity Assessment API",
     description="DevSecOps Repository Assessment API powered by Azure OpenAI",
     version="1.0.0",
     lifespan=lifespan
@@ -65,6 +65,7 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
+        "https://agreeable-moss-04d8d490f.4.azurestaticapps.net",
         "https://green-wave-03cc57a0f.1.azurestaticapps.net",
         "https://green-wave-03cc57a0f-preview.eastus2.1.azurestaticapps.net",
         "https://red-pebble-019922c00.6.azurestaticapps.net",
@@ -231,7 +232,7 @@ async def periodic_cleanup_task():
 async def root():
     """Root endpoint"""
     return {
-        "name": "DevSecOps Assessment API",
+        "name": "DevSecOps Maturity Assessment API",
         "version": "1.0.0",
         "status": "running"
     }
