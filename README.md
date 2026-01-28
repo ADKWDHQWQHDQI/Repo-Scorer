@@ -1,223 +1,217 @@
-# Repository Scorer
+# DevSecOps Repository Assessment Tool
 
-> An intelligent repository quality assessment tool with professional web interface, powered by local LLM (Ollama)
+AI-powered repository governance assessment platform using Azure OpenAI. This tool helps organizations assess their repository management practices across GitHub, GitLab, and Azure DevOps.
 
-## Overview
+## 🚀 Quick Start for Local Development
 
-A modern **Streamlit web application** that conducts intelligent repository assessments using local LLM (Ollama). The application interprets user answers in real-time, applies weighted scoring, and produces a comprehensive quality score out of 100.
+### Option 1: Automated Setup (Recommended)
 
-### AI-Powered Question Importance Weighting
-
-**NEW:** The LLM intelligently evaluates and weights each question based on its importance:
-
-- **On-Demand Scoring**: Each question is scored right before it's displayed to you
-- **Critical practices get higher scores**: Security, branch protection, and CI/CD enforcement are weighted more heavily
-- **Fair scoring**: Points are redistributed based on actual impact on repository health
-- **Visible in Results**: Detailed breakdown shows importance rating, priority level, and impact score for each question
-- **Transparent Process**: Console logs show LLM requests, responses, and parsed scores in real-time
-
-This ensures that critical governance practices contribute more to your final score than minor improvements.
-
-## Architecture
-
-```
-User → Streamlit Web UI
-         ↓
-Question Orchestrator (Python)
-         ↓
-Local LLM (Ollama) ← AI scores importance & classifies answers
-         ↓
-Scoring Engine
-         ↓
-Interactive Results Dashboard
-```
-
-**No databases. No GitHub access. No secrets. 100% local.**
-
-## Scoring Pillars (Total = 100)
-
-| Pillar                    | Weight  |
-| ------------------------- | ------- |
-| Governance & PR Practices | 20      |
-| CI/CD                     | 25      |
-| Testing                   | 20      |
-| Code Quality              | 20      |
-| Documentation & Security  | 15      |
-| **Total**                 | **100** |
-
-## Tech Stack
-
-- **Python 3.10+**
-- **Streamlit 1.52+** (Modern web interface)
-- **Plotly 5.18+** (Interactive visualizations)
-- **Ollama** (Local LLM)
-- **Pydantic** (Data validation)
-
-## Recommended Models
-
-| Model                 | Characteristics      |
-| --------------------- | -------------------- |
-| `phi-3:mini`          | Extremely fast       |
-| `llama3.2:3b`         | Fast, good reasoning |
-| `mistral:7b-instruct` | Better reasoning     |
-
-**Start with `phi-3:mini`**
-
-## Prerequisites
-
-1. **Install Ollama**: [https://ollama.ai](https://ollama.ai)
-2. **Pull a model**:
-   ```bash
-   ollama pull phi-3:mini
-   ```
-
-## Installation
+**Windows:**
 
 ```bash
-# Install dependencies
-pip install -r requirements.txt
+setup.bat
 ```
 
-## Usage
-
-### Web Interface (Primary)
+**macOS/Linux:**
 
 ```bash
-streamlit run streamlit_app.py
+chmod +x setup.sh
+./setup.sh
 ```
 
-The application will:
+Then follow the prompts to configure your credentials in `backend/.env`.
 
-1. Open automatically in your browser at `http://localhost:8501`
-2. Display a professional welcome page with platform selection
-3. Score question importance on-demand as you progress
-4. Provide binary YES/NO responses for clear assessment
-5. Show comprehensive results with interactive charts and detailed breakdowns
-6. Allow export of results as JSON
+### Option 2: Manual Setup
 
-### Features
+See detailed instructions in [LOCAL_SETUP.md](LOCAL_SETUP.md).
 
-- **Modern UI**: Professional design with dark blue theme and clean interface
-- **Real-time Scoring**: Questions scored individually as you answer them
-- **Visual Feedback**: Progress tracking, gauge charts, and pillar breakdowns
-- **Detailed Logging**: Console shows LLM interactions, responses, and scoring decisions
-- **Binary Assessment**: Simple YES/NO responses eliminate misclassification
-- **Export Results**: Download assessment results as JSON for record-keeping
+## 📋 Prerequisites
 
-## Example Output
+- **Python 3.9+**
+- **Node.js 18+**
+- **Azure OpenAI Service** account with API key
+- **Gmail account** with App Password for email notifications
+
+## 🏗️ Project Structure
 
 ```
-🔍 Scoring Question Importance...
-   Question: Are repositories organized using organizations and teams...
-   Current max score: 6.67 points
-   🤖 Sending request to LLM (phi-3:mini)...
-   ⏱️  Timeout: 15 seconds
-   📥 LLM Response: '8'
-   ✨ Parsed Score: 8/10
-   ✅ Updated max score: 8.00 points
-
-Repository Quality Score: 87.5 / 100
-Grade: Excellent
-
-Pillar Breakdown:
-✅ Governance & PR Practices: 18.5/20
-✅ CI/CD Pipeline: 23.0/25
-✅ Testing Strategy: 17.0/20
-⚠️  Code Quality: 15.0/20
-✅ Documentation & Security: 14.0/15
+├── backend/              # FastAPI backend server
+│   ├── main.py          # API endpoints
+│   ├── orchestrator.py  # Assessment orchestration
+│   ├── azure_openai_service.py  # AI integration
+│   ├── email_service.py # Email functionality
+│   ├── database.py      # Database models & operations
+│   ├── config.py        # Assessment questions & config
+│   ├── scoring.py       # Scoring logic
+│   ├── models.py        # Data models
+│   ├── .env.example     # Environment template
+│   └── requirements.txt # Python dependencies
+│
+├── frontend/            # React + TypeScript frontend
+│   ├── src/            # Source code
+│   │   ├── components/ # React components
+│   │   ├── pages/      # Page components
+│   │   ├── services/   # API services
+│   │   ├── store/      # State management
+│   │   └── types/      # TypeScript types
+│   ├── public/         # Static assets
+│   ├── .env.local      # Local environment config
+│   └── package.json    # Node dependencies
+│
+├── LOCAL_SETUP.md      # Detailed setup guide
+├── setup.bat           # Windows setup script
+├── setup.sh            # macOS/Linux setup script
+└── README.md           # This file
 ```
 
-## How It Works
+## 🔧 Configuration
 
-### Binary Assessment System
+### Backend Environment Variables
 
-The application uses a simplified binary YES/NO system:
-
-- **User selects**: YES or NO radio button
-- **Score calculated**: YES = full points, NO = 0 points
-- **No LLM classification**: Direct mapping eliminates misclassification
-- **Transparent**: Every decision is deterministic and explainable
-
-### AI Responsibilities
-
-- ✅ Score question importance (1-10 scale)
-- ✅ Evaluate impact of governance practices
-- ✅ Provide varied importance distribution
-
-### AI Does NOT
-
-- ❌ Calculate scores (Python handles this)
-- ❌ Classify YES/NO answers (direct user input)
-- ❌ Define questions (fixed bank)
-- ❌ Invent responses (user selects explicitly)
-
-## Why This Design
-
-✅ **Simple & Fast**: Binary responses, no ambiguity  
-✅ **Accurate**: No misclassification of YES as NO  
-✅ **Transparent**: Clear logging of all decisions  
-✅ **Local**: No secrets, no external API calls  
-✅ **Privacy-Friendly**: All processing on your machine  
-✅ **Explainable**: Every score is traceable  
-✅ **Professional UI**: Modern web interface with charts
-
-## Configuration
-
-Edit `.env` file to customize:
+Create `backend/.env` from `backend/.env.example`:
 
 ```env
-OLLAMA_HOST=http://localhost:11434
-OLLAMA_MODEL=phi-3:mini
+# Azure OpenAI (Required)
+AZURE_OPENAI_ENDPOINT=https://your-resource.openai.azure.com/
+AZURE_OPENAI_API_KEY=your-api-key-here
+AZURE_OPENAI_DEPLOYMENT=gpt-4.1-mini
+AZURE_OPENAI_API_VERSION=2025-01-01-preview
+
+# Gmail SMTP (Required for email notifications)
+SMTP_SERVER=smtp.gmail.com
+SMTP_PORT=587
+SENDER_EMAIL=your-email@gmail.com
+SENDER_PASSWORD=your-gmail-app-password
+
+# Application
+BASE_URL=http://localhost:5173
 ```
 
-## Development
+**Getting Gmail App Password:**
 
-Project structure:
+1. Enable 2-Step Verification in your Google Account
+2. Go to Security > App passwords
+3. Generate a password for "Mail"
+4. Use the 16-character password in SENDER_PASSWORD
 
-```
-├── streamlit_app.py          # Main Streamlit application
-├── src/
-│   └── repo_scorer/
-│       ├── orchestrator.py   # Assessment orchestration
-│       ├── config.py          # Question definitions
-│       ├── models.py          # Data models
-│       ├── scoring.py         # Scoring logic
-│       └── services/
-│           └── ollama_service.py  # LLM interaction
-├── requirements.txt
-└── README.md
+### Frontend Environment Variables
+
+Already configured in `frontend/.env.local`:
+
+```env
+VITE_API_URL=http://localhost:8000
 ```
 
-## Contributing
+## 🎯 Running the Application
 
-This is a self-contained assessment tool. To add questions:
+### Start Backend
 
-1. Edit `src/repo_scorer/config.py`
-2. Add questions to appropriate pillar
-3. Restart the Streamlit app
+```bash
+cd backend
+# Activate virtual environment
+venv\Scripts\activate  # Windows
+source venv/bin/activate  # macOS/Linux
 
-## License
+# Run server
+python main.py
+```
 
-MIT
+Backend runs at: **http://localhost:8000**
 
-## Troubleshooting
+### Start Frontend (in new terminal)
 
-**Issue**: "Cannot connect to Ollama"
+```bash
+cd frontend
+npm run dev
+```
 
-- **Solution**: Ensure Ollama is running: `ollama serve`
+Frontend runs at: **http://localhost:5173**
 
-**Issue**: "Model not found"
+## 🧪 Testing
 
-- **Solution**: Pull the model: `ollama pull phi-3:mini`
+### Backend Tests
 
-**Issue**: "Importance scoring timeout"
+```bash
+cd backend
+pytest
+```
 
-- **Solution**: Model may be slow. Check system resources or try a faster model like `phi-3:mini`
+### Frontend Tests
 
----
+```bash
+cd frontend
+npm test
+```
 
-Built with ❤️ using local AI - no data leaves your machine
+## 💡 Features
 
-## License
+- ✅ Multi-platform support (GitHub, GitLab, Azure DevOps)
+- ✅ AI-powered analysis using Azure OpenAI GPT-4
+- ✅ Real-time assessment with instant feedback
+- ✅ Email delivery of results with shareable links
+- ✅ Comprehensive scoring across 5 pillars:
+  - Security
+  - Governance
+  - Code Review
+  - Repository Management
+  - Process Metrics
+- ✅ Work email validation (blocks personal domains)
+- ✅ Responsive UI with modern design
 
-MIT
+## 🛠️ Tech Stack
+
+- **Backend**: FastAPI, SQLAlchemy, Azure OpenAI SDK, Pydantic
+- **Frontend**: React 18, TypeScript, TailwindCSS, Vite, Zustand
+- **AI**: Azure OpenAI GPT-4
+- **Database**: SQLite (local) / Azure SQL (production)
+- **Email**: SMTP (Gmail)
+- **Deployment**: Azure Static Web Apps + Azure App Service
+
+## 📚 API Documentation
+
+Once the backend is running, visit:
+
+- **Swagger UI**: http://localhost:8000/docs
+- **ReDoc**: http://localhost:8000/redoc
+
+## 🐛 Troubleshooting
+
+### "Azure OpenAI API key is required"
+
+- Ensure `backend/.env` file exists
+- Verify `AZURE_OPENAI_API_KEY` is set correctly
+- Check for extra spaces or quotes
+
+### "Email configuration error"
+
+- Confirm Gmail App Password is set in `SENDER_PASSWORD`
+- Ensure 2-Step Verification is enabled on your Google account
+
+### "Cannot connect to backend"
+
+- Verify backend is running on port 8000
+- Check `frontend/.env.local` has correct backend URL
+- Ensure no firewall is blocking the connection
+
+See [LOCAL_SETUP.md](LOCAL_SETUP.md) for more detailed troubleshooting.
+
+## 🚢 Production Deployment
+
+The application is configured for Azure deployment:
+
+- **Frontend**: Azure Static Web Apps
+- **Backend**: Azure App Service (Python)
+- **Database**: Azure SQL Database
+
+See production configuration in:
+
+- `frontend/.env.production`
+- `frontend/public/staticwebapp.config.json`
+
+## 📝 License
+
+This project is proprietary.
+
+## 🤝 Contributing
+
+For contributions, please follow the existing code structure and add appropriate tests.

@@ -1,0 +1,499 @@
+import { useNavigate, useLocation } from 'react-router-dom'
+import { Home, CheckCircle2, Gauge, Mail } from 'lucide-react'
+import { useAssessmentStore } from '../store/assessmentStore'
+import { getScoreLabel, getScoreClass, getScoreBgClass } from '../lib/utils'
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
+import { useState, useEffect } from 'react'
+
+export function ResultsPage() {
+  const navigate = useNavigate()
+  const location = useLocation()
+  const { results, reset, emailSent, emailMessage } = useAssessmentStore()
+  const state = location.state as { showScoreAnimation?: boolean; animatedScore?: number } | null
+  const [showFloatingScore, setShowFloatingScore] = useState(false)
+  const [isAnimating, setIsAnimating] = useState(state?.showScoreAnimation ?? false)
+  
+  // Scroll to top when component mounts
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'instant' })
+  }, [])
+  
+  useEffect(() => {
+    if (state?.showScoreAnimation) {
+      // Show floating modal for 800ms, then transform to speedometer
+      const timer = setTimeout(() => {
+        setIsAnimating(false)
+        setShowFloatingScore(true)
+      }, 800)
+      return () => clearTimeout(timer)
+    }
+  }, [state?.showScoreAnimation])
+
+  if (!results) {
+    navigate('/')
+    return null
+  }
+
+  const scoreLabel = getScoreLabel(results.final_score)
+  const scoreClass = getScoreClass(results.final_score)
+  const scoreBgClass = getScoreBgClass(results.final_score)
+
+  // Prepare pillar chart data from breakdown
+  const pillarData = Object.values(results.breakdown).map((pillar) => ({
+    name: pillar.name,
+    earned: pillar.earned,
+    max: pillar.max,
+    percentage: pillar.percentage,
+  }))
+
+  const handleReset = () => {
+    reset()
+    navigate('/')
+  }
+
+  return (
+    <div className="max-w-6xl mx-auto py-6 sm:py-8 px-4 sm:px-6 space-y-8">
+      {/* Animated Floating Modal that transforms to speedometer */}
+      {isAnimating && (
+        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 backdrop-blur-sm animate-fadeIn">
+          <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full mx-4 animate-scaleIn">
+            <div className="text-center">
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-green-600 to-emerald-700 mb-6 shadow-lg">
+                <CheckCircle2 className="w-8 h-8 text-white" />
+              </div>
+              <h3 className="text-xl sm:text-2xl font-bold text-slate-900 mb-2">Assessment Complete!</h3>
+              <div className="text-5xl sm:text-6xl font-bold bg-gradient-to-r from-blue-600 to-indigo-700 bg-clip-text text-transparent mb-2">
+                {results.final_score.toFixed(1)}<span className="text-2xl sm:text-3xl">/100</span>
+              </div>
+              <p className="text-slate-600 font-semibold">{scoreLabel}</p>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Header */}
+      <div className="text-center px-2">
+        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-2">Assessment Complete!</h1>
+        <p className="text-sm sm:text-base text-gray-600">Here's your comprehensive repository governance analysis</p>
+      </div>
+
+      {/* Score Card */}
+      <div className={`rounded-xl p-5 sm:p-8 border-l-8 ${scoreBgClass}`}>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
+          <div>
+            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Final Score</h2>
+            <p className="text-base sm:text-lg text-gray-600">Overall Repository Quality Assessment</p>
+          </div>
+          <div className="text-center">
+            <div className={`text-5xl sm:text-6xl lg:text-7xl font-bold ${scoreClass}`}>{results.final_score.toFixed(1)}</div>
+            <div className="text-xl sm:text-2xl font-semibold text-gray-700">{scoreLabel}</div>
+          </div>
+        </div>
+      </div>
+            {/* Charts */}
+      <div className="grid md:grid-cols-1 gap-8">
+
+        {/* Quality Score Display */}
+        <div className={`bg-gradient-to-br from-white to-indigo-50 border-2 border-indigo-200 rounded-2xl p-5 sm:p-8 shadow-lg ${showFloatingScore ? 'animate-slideInRight' : ''}`}>
+          <h1 className="text-2xl font-bold text-gray-900 mb-4 flex items-center justify-center gap-3">
+            <div className="p-1 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-xl shadow-md">
+              <Gauge className="w-8 h-8 text-white" />
+            </div>
+            Overall Quality Score
+          </h1>
+          
+          {/* Simple Circular Progress */}
+          <div className="flex items-center justify-center py-4">
+            <div className="relative w-56 h-56 sm:w-64 sm:h-64">
+              {/* Circular Progress Ring */}
+              <svg className="w-full h-full transform -rotate-90" viewBox="0 0 200 200">
+                {/* Background Circle */}
+                <circle
+                  cx="100"
+                  cy="100"
+                  r="80"
+                  fill="none"
+                  stroke="#e5e7eb"
+                  strokeWidth="16"
+                />
+                {/* Progress Circle */}
+                <circle
+                  cx="100"
+                  cy="100"
+                  r="80"
+                  fill="none"
+                  stroke={results.final_score >= 80 ? '#22c55e' : results.final_score >= 60 ? '#eab308' : results.final_score >= 40 ? '#f97316' : '#ef4444'}
+                  strokeWidth="16"
+                  strokeDasharray={`${(results.final_score / 100) * 502.4} 502.4`}
+                  strokeLinecap="round"
+                  className="transition-all duration-1000 ease-out"
+                />
+              </svg>
+              
+              {/* Score Display - Centered */}
+              <div className="absolute inset-0 flex flex-col items-center justify-center">
+                <div className={`text-6xl font-black ${scoreClass} mb-1`}>
+                  {results.final_score.toFixed(1)}
+                </div>
+                <div className="text-sm text-gray-500 font-semibold uppercase tracking-wider">
+                  out of 100
+                </div>
+                <div className={`mt-4 px-6 py-2 rounded-full ${scoreBgClass} ${scoreClass} font-bold text-sm shadow-md`}>
+                  {scoreLabel}
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          {/* Score Details */}
+          <div className="mt-4 text-center px-4">
+            <p className="text-base text-gray-700 font-medium leading-relaxed">
+              Your repository demonstrates <span className="font-bold text-indigo-600 text-lg">{results.final_score >= 80 ? 'excellent' : results.final_score >= 60 ? 'good' : results.final_score >= 40 ? 'moderate' : 'developing'}</span> DevSecOps maturity
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Pillar Breakdown Bar Chart - Full Width */}
+      <div className="bg-white border border-gray-200 rounded-lg p-6">
+        <h3 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+          <div className="h-1 w-12 bg-gradient-to-r from-indigo-600 to-purple-600 rounded"></div>
+          Pillar Performance Analysis
+        </h3>
+        <ResponsiveContainer width="100%" height={500}>
+          <BarChart data={pillarData} margin={{ top: 20, right: 30, left: 20, bottom: 100 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+            <XAxis 
+              dataKey="name" 
+              angle={-35} 
+              textAnchor="end" 
+              height={120}
+              interval={0}
+              tick={{ fontSize: 12, fill: '#374151' }}
+              stroke="#9ca3af"
+            />
+            <YAxis 
+              label={{ value: 'Percentage (%)', angle: -90, position: 'insideLeft', style: { fontSize: 14, fill: '#6b7280' } }}
+              tick={{ fontSize: 12, fill: '#6b7280' }}
+              stroke="#9ca3af"
+            />
+            <Tooltip 
+              content={({ active, payload, label }) => {
+                if (active && payload && payload.length) {
+                  const earnedData = payload[0];
+                  const maxData = payload[1];
+                  return (
+                    <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-lg">
+                      <p className="font-bold text-gray-900 mb-2">{label}</p>
+                      <p className="text-sm text-gray-600">
+                        Achieved: <span className="font-semibold text-indigo-600">{typeof earnedData.value === 'number' ? earnedData.value.toFixed(1) : earnedData.value}%</span> of total
+                      </p>
+                      <p className="text-sm text-gray-500">
+                        Max Possible: {typeof maxData.value === 'number' ? maxData.value.toFixed(1) : maxData.value}% of total
+                      </p>
+                    </div>
+                  );
+                }
+                return null;
+              }}
+            />
+            <Legend 
+              wrapperStyle={{ paddingTop: '20px' }}
+              iconType="rect"
+            />
+            <Bar dataKey="earned" fill="#6366f1" name="Achieved (%)" radius={[8, 8, 0, 0]} />
+            <Bar dataKey="max" fill="#e5e7eb" name="Max Possible (%)" radius={[8, 8, 0, 0]} />
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+
+
+      {/* Executive Summary */}
+      {results.summary && (
+        <div className="bg-gradient-to-br from-white to-blue-50 border-2 border-blue-200 rounded-xl shadow-sm p-6 sm:p-8">
+          <div className="flex items-center gap-3 mb-6 pb-4 border-b-2 border-blue-200">
+            <div className="w-1 h-8 bg-gradient-to-b from-indigo-600 to-purple-600 rounded-full"></div>
+            <h3 className="text-xl sm:text-2xl font-bold text-gray-900"> Executive Summary</h3>
+          </div>
+          <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-100">
+            <div className={`inline-block px-4 py-2 rounded-lg mb-4 ${scoreBgClass}`}>
+              <span className={`text-sm font-bold ${scoreClass}`}>Assessment Status: {scoreLabel}</span>
+            </div>
+            <div className="prose max-w-none space-y-4">
+            {(() => {
+              const lines = results.summary.split('\n');
+              const elements: React.ReactElement[] = [];
+              let currentList: string[] = [];
+              let paragraphText = '';
+
+              lines.forEach((line, index) => {
+                const trimmedLine = line.trim();
+
+                // Check if line is a special formatted section heading (e.g., "•1. EXECUTIVE SUMMARY*")
+                const specialHeadingMatch = trimmedLine.match(/^[•\-*]\s*(\d+\.\s+[A-Z\s&]+)\*$/);
+                
+                // Check if line is a numbered section heading (e.g., "1. EXECUTIVE SUMMARY")
+                const isNumberedHeading = /^\d+\.\s+[A-Z\s&]+$/.test(trimmedLine);
+
+                if (specialHeadingMatch) {
+                  // Flush any pending content
+                  if (currentList.length > 0) {
+                    elements.push(
+                      <ul key={`ul-${index}`} className="mb-4 space-y-2 pl-0">
+                        {currentList.map((item, i) => (
+                          <li key={i} className="flex items-start">
+                            <span className="text-indigo-600 mr-2 mt-1">•</span>
+                            <span className="text-gray-700 flex-1" dangerouslySetInnerHTML={{ __html: item.replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold text-gray-900">$1</strong>').replace(/\*(.*?)\*/g, '<em>$1</em>') }} />
+                          </li>
+                        ))}
+                      </ul>
+                    );
+                    currentList = [];
+                  }
+                  if (paragraphText) {
+                    elements.push(
+                      <p key={`p-${index}`} className="mb-4 text-gray-700 leading-relaxed">
+                        <span dangerouslySetInnerHTML={{ __html: paragraphText.replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold text-gray-900">$1</strong>').replace(/\*(.*?)\*/g, '<em>$1</em>') }} />
+                      </p>
+                    );
+                    paragraphText = '';
+                  }
+                  // Add special formatted heading (bold, italic, larger font)
+                  const headingText = specialHeadingMatch[1];
+                  elements.push(
+                    <h4 key={`sh-${index}`} className="text-xl font-bold italic text-gray-900 mt-6 mb-4">
+                      {headingText}
+                    </h4>
+                  );
+                }
+                else if (isNumberedHeading) {
+                  // Flush any pending content
+                  if (currentList.length > 0) {
+                    elements.push(
+                      <ul key={`ul-${index}`} className="mb-4 space-y-2 pl-0">
+                        {currentList.map((item, i) => (
+                          <li key={i} className="flex items-start">
+                            <span className="text-indigo-600 mr-2 mt-1">•</span>
+                            <span className="text-gray-700 flex-1" dangerouslySetInnerHTML={{ __html: item.replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold text-gray-900">$1</strong>').replace(/\*(.*?)\*/g, '<em>$1</em>') }} />
+                          </li>
+                        ))}
+                      </ul>
+                    );
+                    currentList = [];
+                  }
+                  if (paragraphText) {
+                    elements.push(
+                      <p key={`p-${index}`} className="mb-4 text-gray-700 leading-relaxed">
+                        <span dangerouslySetInnerHTML={{ __html: paragraphText.replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold text-gray-900">$1</strong>').replace(/\*(.*?)\*/g, '<em>$1</em>') }} />
+                      </p>
+                    );
+                    paragraphText = '';
+                  }
+                  // Add numbered heading
+                  elements.push(
+                    <h4 key={`h-${index}`} className="text-lg font-bold text-gray-900 mt-6 mb-3 flex items-center gap-2">
+                      <div className="w-1.5 h-6 bg-gradient-to-b from-indigo-600 to-purple-600 rounded-full"></div>
+                      {trimmedLine}
+                    </h4>
+                  );
+                }
+                // Handle bullet points
+                else if (trimmedLine.startsWith('-') || trimmedLine.startsWith('•') || trimmedLine.startsWith('*')) {
+                  if (paragraphText) {
+                    elements.push(
+                      <p key={`p-${index}`} className="mb-4 text-gray-700 leading-relaxed">
+                        <span dangerouslySetInnerHTML={{ __html: paragraphText.replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold text-gray-900">$1</strong>').replace(/\*(.*?)\*/g, '<em>$1</em>') }} />
+                      </p>
+                    );
+                    paragraphText = '';
+                  }
+                  const bulletText = trimmedLine.substring(1).trim();
+                  currentList.push(bulletText);
+                }
+                // Handle empty lines
+                else if (trimmedLine === '') {
+                  if (currentList.length > 0) {
+                    elements.push(
+                      <ul key={`ul-${index}`} className="mb-4 space-y-2 pl-0">
+                        {currentList.map((item, i) => (
+                          <li key={i} className="flex items-start">
+                            <span className="text-indigo-600 mr-2 mt-1">•</span>
+                            <span className="text-gray-700 flex-1" dangerouslySetInnerHTML={{ __html: item.replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold text-gray-900">$1</strong>').replace(/\*(.*?)\*/g, '<em>$1</em>') }} />
+                          </li>
+                        ))}
+                      </ul>
+                    );
+                    currentList = [];
+                  }
+                  if (paragraphText) {
+                    elements.push(
+                      <p key={`p-${index}`} className="mb-4 text-gray-700 leading-relaxed">
+                        <span dangerouslySetInnerHTML={{ __html: paragraphText.replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold text-gray-900">$1</strong>').replace(/\*(.*?)\*/g, '<em>$1</em>') }} />
+                      </p>
+                    );
+                    paragraphText = '';
+                  }
+                }
+                // Handle regular text
+                else {
+                  if (currentList.length > 0) {
+                    elements.push(
+                      <ul key={`ul-${index}`} className="mb-4 space-y-2 pl-0">
+                        {currentList.map((item, i) => (
+                          <li key={i} className="flex items-start">
+                            <span className="text-indigo-600 mr-2 mt-1">•</span>
+                            <span className="text-gray-700 flex-1" dangerouslySetInnerHTML={{ __html: item.replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold text-gray-900">$1</strong>').replace(/\*(.*?)\*/g, '<em>$1</em>') }} />
+                          </li>
+                        ))}
+                      </ul>
+                    );
+                    currentList = [];
+                  }
+                  paragraphText += (paragraphText ? ' ' : '') + trimmedLine;
+                }
+              });
+
+              // Flush any remaining content
+              if (currentList.length > 0) {
+                elements.push(
+                  <ul key="ul-final" className="mb-4 space-y-2 pl-0">
+                    {currentList.map((item, i) => (
+                      <li key={i} className="flex items-start">
+                        <span className="text-indigo-600 mr-2 mt-1">•</span>
+                        <span className="text-gray-700 flex-1" dangerouslySetInnerHTML={{ __html: item.replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold text-gray-900">$1</strong>').replace(/\*(.*?)\*/g, '<em>$1</em>') }} />
+                      </li>
+                    ))}
+                  </ul>
+                );
+              }
+              if (paragraphText) {
+                elements.push(
+                  <p key="p-final" className="mb-4 text-gray-700 leading-relaxed">
+                    <span dangerouslySetInnerHTML={{ __html: paragraphText.replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold text-gray-900">$1</strong>').replace(/\*(.*?)\*/g, '<em>$1</em>') }} />
+                  </p>
+                );
+              }
+
+              return <>{elements}</>;
+            })()}
+          </div>
+        </div>
+        </div>
+      )}
+
+      {/* Professional Results Notification Card */}
+      <div className="bg-gradient-to-br from-white via-blue-50 to-indigo-50 border-2 border-indigo-300 rounded-2xl shadow-lg overflow-hidden">
+        <div className="bg-gradient-to-r from-indigo-600 to-blue-600 px-6 py-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
+              <Mail className="w-6 h-6 text-white" />
+            </div>
+            <div className="flex-1">
+              <h3 className="text-xl font-bold text-white">Assessment Report Delivered</h3>
+              {emailSent && (
+                <div className="flex items-center gap-2 mt-1">
+                  <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                  <span className="text-sm text-green-100 font-medium">Successfully sent to your email</span>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+        
+        <div className="p-6 sm:p-8 space-y-4">
+          {emailSent ? (
+            <>
+              <p className="text-base text-gray-800 leading-relaxed">
+                Your comprehensive assessment report has been delivered to your email inbox. Please check your email to access the full detailed report.
+              </p>
+              <div className="bg-white rounded-lg p-5 space-y-3 border border-indigo-100 shadow-sm">
+                <div className="flex items-start gap-3">
+                  <div className="w-1.5 h-1.5 bg-indigo-600 rounded-full mt-2"></div>
+                  <p className="text-sm text-gray-700">Detailed question-by-question analysis with explanations</p>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-1.5 h-1.5 bg-indigo-600 rounded-full mt-2"></div>
+                  <p className="text-sm text-gray-700">Personalized recommendations for improvement</p>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-1.5 h-1.5 bg-indigo-600 rounded-full mt-2"></div>
+                  <p className="text-sm text-gray-700">Actionable insights and next steps</p>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-1.5 h-1.5 bg-indigo-600 rounded-full mt-2"></div>
+                  <p className="text-sm text-gray-700">Shareable link valid for 48 hours</p>
+                </div>
+              </div>
+              <div className="bg-indigo-50 border border-indigo-200 rounded-lg px-4 py-3">
+                <p className="text-xs text-indigo-900 flex items-center gap-2">
+                  <svg className="w-4 h-4 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                  </svg>
+                  <span className="font-medium">Check your inbox:</span> The email contains a secure link to view your detailed results.
+                </p>
+              </div>
+            </>
+          ) : (
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-5">
+              <div className="flex items-start gap-3">
+                <svg className="w-5 h-5 text-amber-600 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+                <div>
+                  <p className="text-sm font-semibold text-amber-900 mb-1">Email Delivery Issue</p>
+                  <p className="text-sm text-amber-800">
+                    {emailMessage || 'We encountered an issue sending your report via email. Please contact support for assistance.'}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+      {/* Actions */}
+      <div className="flex gap-4 justify-center pt-8">
+        <button
+          type="button"
+          onClick={handleReset}
+          className="inline-flex items-center gap-2 px-6 py-3 bg-gray-600 text-white font-semibold rounded-lg hover:bg-gray-700 transition-colors shadow-lg"
+        >
+          <Home className="w-5 h-5" />
+          New Assessment
+        </button>
+      </div>
+
+      {/* Contact Support Section */}
+      <div className="mt-12 mb-8">
+        <div className="bg-gradient-to-br from-indigo-600 via-purple-600 to-blue-600 rounded-2xl shadow-2xl p-8 text-center border-4 border-white">
+          <div className="flex justify-center mb-4">
+            <div className="bg-white rounded-full p-4 shadow-lg">
+              <Mail className="w-10 h-10 text-indigo-600" />
+            </div>
+          </div>
+          <h3 className="text-2xl sm:text-3xl font-bold text-white mb-3 drop-shadow-lg">
+            Need More Assistance?
+          </h3>
+          <p className="text-lg text-indigo-100 mb-5 font-medium">
+            Our DevOps team is here to help you improve your repository governance
+          </p>
+          <a
+            href="mailto:devops@ecanarys.com"
+            onClick={(e) => {
+              e.preventDefault();
+              window.location.href = 'mailto:devops@ecanarys.com';
+            }}
+            className="inline-flex items-center gap-3 bg-white text-indigo-600 font-bold text-lg px-8 py-4 rounded-full shadow-xl hover:shadow-2xl hover:bg-indigo-50 transition-all duration-300 cursor-pointer"
+          >
+            <Mail className="w-6 h-6" />
+            <span>devops@ecanarys.com</span>
+          </a>
+          <p className="text-sm text-indigo-200 mt-4 font-medium">
+            Click to send us an email directly
+          </p>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+
