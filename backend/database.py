@@ -1,5 +1,5 @@
 """
-Database configuration and models for DevSecOps Assessment - MSSQL/Azure SQL
+Database configuration and models for DevSecOps Maturity Assessment - MSSQL/Azure SQL
 """
 from sqlalchemy import create_engine, Column, Integer, String, DateTime, Boolean
 from sqlalchemy.orm import declarative_base, sessionmaker
@@ -164,7 +164,7 @@ def init_db():
 
 if __name__ == "__main__":
     print("=" * 50)
-    print("Initializing DevSecOps Assessment Database (MSSQL)")
+    print("Initializing DevSecOps Maturity Assessment Database (MSSQL)")
     print("=" * 50)
     print()
     init_db()

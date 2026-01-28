@@ -109,7 +109,7 @@ export function Sidebar({ isOpen, onToggle }: SidebarProps) {
         {/* Logo */}
         <div className="text-center py-4">
           <CheckCircle className="w-10 h-10 text-blue-400 mx-auto mb-3" />
-          <h2 className="text-lg font-bold text-white">DevSecOps Assessment</h2>
+          <h2 className="text-lg font-bold text-white">DevSecOps Maturity Assessment</h2>
           <p className="text-xs text-slate-400">AI-Powered Assessment</p>
         </div>
 
@@ -180,7 +180,7 @@ export function Sidebar({ isOpen, onToggle }: SidebarProps) {
             rel="noopener noreferrer"
             className="text-blue-400 hover:text-blue-300 font-medium transition-colors"
           >
-            Canarys Automations
+            Canarys Automations Ltd
           </a>
         </div>
       </div>

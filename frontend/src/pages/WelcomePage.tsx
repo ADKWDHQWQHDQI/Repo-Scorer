@@ -9,7 +9,7 @@ import {
   BarChart3,
   FileText,
   TrendingUp,
-  Lock,
+
   GitCommit,
   Award,
   Sparkles
@@ -30,75 +30,41 @@ export function WelcomePage() {
   return (
     <div className="max-w-6xl mx-auto py-6 sm:py-8 px-4 sm:px-6">
 
-      {/* Platform Overview Section */}
-      <section className="mb-8 bg-white rounded-xl p-4 sm:p-5 lg:p-6 border border-gray-200 shadow-sm">
-        <div className="flex items-center gap-2.5 mb-5">
-          <div className="p-2.5 bg-blue-600 rounded-lg">
+      {/* Platform Overview */}
+      <section className="mb-8 bg-white rounded-xl p-6 sm:p-8 border border-gray-200 shadow-sm">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="p-2 bg-blue-600 rounded-lg">
             <Target className="w-5 h-5 text-white" />
           </div>
           <h2 className="text-2xl font-semibold text-gray-900">Platform Overview</h2>
         </div>
-        <div className="grid md:grid-cols-2 gap-5">
-          <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg p-5 border border-blue-100">
-            <h3 className="text-lg font-semibold text-gray-900 mb-2.5 flex items-center gap-2">
-              <Sparkles className="w-4.5 h-4.5 text-blue-600" />
-              What We Do
-            </h3>
-            <p className="text-gray-700 text-sm leading-relaxed mb-3.5">
-              Our platform delivers enterprise-grade repository assessments using Azure OpenAI technology. 
-              We evaluate 15 critical dimensions of your software development lifecycle, from repository structure 
-              to security compliance, providing data-driven insights to optimize your DevSecOps practices.
-            </p>
-            <ul className="space-y-1.5 text-gray-700 text-sm">
-              <li className="flex items-start gap-2">
-                <CheckCircle2 className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
-                <span><strong>Comprehensive Analysis:</strong> 15 weighted assessment criteria</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <CheckCircle2 className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
-                <span><strong>AI-Enhanced:</strong> AI-powered recommendations</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <CheckCircle2 className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
-                <span><strong>Multi-Platform:</strong> GitHub, GitLab, Azure DevOps support</span>
-              </li>
-            </ul>
-          </div>
-          <div className="bg-gradient-to-br from-slate-50 to-gray-50 rounded-lg p-5 border border-gray-200">
-            <h3 className="text-lg font-semibold text-gray-900 mb-2.5 flex items-center gap-2">
-              <Shield className="w-4.5 h-4.5 text-blue-600" />
-              Assessment Focus Areas
-            </h3>
-            <div className="space-y-3">
-              <div className="flex items-start gap-3">
-                <div className="p-2 bg-blue-50 rounded-lg">
-                  <GitCommit className="w-4 h-4 text-blue-600" />
-                </div>
-                <div>
-                  <h4 className="font-semibold text-gray-900">Repository Governance</h4>
-                  <p className="text-sm text-gray-600">Branch protection, access controls, compliance</p>
-                </div>
-              </div>
-              <div className="flex items-start gap-3">
-                <div className="p-2 bg-green-50 rounded-lg">
-                  <Zap className="w-4 h-4 text-green-600" />
-                </div>
-                <div>
-                  <h4 className="font-semibold text-gray-900">CI/CD Maturity</h4>
-                  <p className="text-sm text-gray-600">Pipeline automation, testing, deployment strategies</p>
-                </div>
-              </div>
-              <div className="flex items-start gap-3">
-                <div className="p-2 bg-purple-50 rounded-lg">
-                  <BarChart3 className="w-4 h-4 text-purple-600" />
-                </div>
-                <div>
-                  <h4 className="font-semibold text-gray-900">Code Quality & Security</h4>
-                  <p className="text-sm text-gray-600">Static analysis, vulnerability scanning, best practices</p>
-                </div>
-              </div>
-            </div>
-          </div>
+        
+        <p className="text-gray-700 text-base leading-relaxed mb-6 max-w-4xl">
+          An AI-powered assessment that evaluates your development practices across key DevSecOps maturity dimensions. 
+          Gain clear visibility into delivery performance, security posture, and operational maturity—along with actionable 
+          recommendations to improve.
+        </p>
+
+        {/* Highlights */}
+        <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg p-5 border border-blue-100">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+            <Sparkles className="w-5 h-5 text-blue-600" />
+            Highlights
+          </h3>
+          <ul className="space-y-3 text-gray-700 text-sm max-w-4xl">
+            <li className="flex items-start gap-3">
+              <CheckCircle2 className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" />
+              <span><strong>Maturity-Based Evaluation:</strong> Weighted criteria across delivery, security, and reliability</span>
+            </li>
+            <li className="flex items-start gap-3">
+              <CheckCircle2 className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" />
+              <span><strong>AI-Driven Insights:</strong> Context-aware recommendations mapped to best practices</span>
+            </li>
+            <li className="flex items-start gap-3">
+              <CheckCircle2 className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" />
+              <span><strong>Multi-Platform:</strong> GitHub, GitLab, Azure DevOps, Jenkins and others covered</span>
+            </li>
+          </ul>
         </div>
       </section>
 
@@ -164,27 +130,21 @@ export function WelcomePage() {
         <p className="text-gray-700 mb-6 text-sm">
           Our streamlined process ensures a thorough evaluation in under 10 minutes:
         </p>
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
           <WorkflowStep
             number="1"
-            title="Select Platform"
-            description="Choose your repository platform: GitHub, GitLab, or Azure DevOps"
+            title="Select Platforms"
+            description="Choose your repository, CI/CD and other platforms: GitHub, GitLab, Azure DevOps, Jenkins"
             icon={<Target className="w-6 h-6" />}
           />
           <WorkflowStep
             number="2"
             title="Answer Questions"
-            description="Complete 15 targeted questions about your repository setup and practices"
+            description="Answer the questions about your repository, CI/CD, and development practices"
             icon={<CheckCircle2 className="w-6 h-6" />}
           />
           <WorkflowStep
             number="3"
-            title="AI Analysis"
-            description="AI processes your responses and generates comprehensive insights"
-            icon={<Sparkles className="w-6 h-6" />}
-          />
-          <WorkflowStep
-            number="4"
             title="Review Results"
             description="Access your detailed score, visualizations, and actionable recommendations"
             icon={<BarChart3 className="w-6 h-6" />}
@@ -202,7 +162,7 @@ export function WelcomePage() {
           <ArrowRight className="w-5 h-5" />
         </button>
         <p className="text-gray-600 mt-4 text-sm">
-          Begin your comprehensive DevSecOps assessment
+          Begin your comprehensive DevSecOps maturity assessment
         </p>
       </div>
       
@@ -210,9 +170,9 @@ export function WelcomePage() {
       <div className="mt-6 pt-4 border-t border-gray-200">
         <div className="grid md:grid-cols-4 gap-6 text-center">
           <TrustIndicator
-            icon={<Lock className="w-6 h-6" />}
-            title="Enterprise Security"
-            description="Azure OpenAI with data privacy"
+            icon={<Sparkles className="w-6 h-6" />}
+            title="AI-Powered"
+            description="AI-generated actionable insights"
           />
           <TrustIndicator
             icon={<Zap className="w-6 h-6" />}

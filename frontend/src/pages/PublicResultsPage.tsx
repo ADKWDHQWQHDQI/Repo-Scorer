@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { Home, Gauge, Clock, Mail, TrendingUp } from 'lucide-react';
+import { QuestionInfoButton } from '../components/QuestionInfoButton';
 import type { AssessmentResult } from '../types';
 
 interface SharedResultsData {
@@ -22,7 +23,10 @@ export const PublicResultsPage = () => {
     const fetchResults = async () => {
       try {
         setLoading(true);
-        const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+        // In production (deployed), use relative path since backend serves everything
+        // In development, use full localhost URL
+        const API_URL = import.meta.env.VITE_API_URL || 
+          (import.meta.env.MODE === 'production' ? '' : 'http://localhost:8000');
         const response = await fetch(`${API_URL}/api/results/shared/${shareToken}`);
         
         if (!response.ok) {
@@ -55,54 +59,105 @@ export const PublicResultsPage = () => {
     let currentList: string[] = [];
     let paragraphText = '';
 
+    const formatText = (text: string) => {
+      return text
+        .replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold text-gray-900">$1</strong>')
+        .replace(/\*(.*?)\*/g, '<em class="text-gray-800">$1</em>')
+        .replace(/`(.*?)`/g, '<code class="px-1.5 py-0.5 bg-gray-100 text-indigo-600 rounded text-sm font-mono">$1</code>');
+    };
+
     lines.forEach((line, index) => {
       const trimmedLine = line.trim();
 
-      // Handle bullet points
-      if (trimmedLine.startsWith('-') || trimmedLine.startsWith('•') || trimmedLine.startsWith('*')) {
-        if (paragraphText) {
-          elements.push(
-            <p key={`p-${index}`} className="mb-4 text-gray-700 leading-relaxed">
-              <span dangerouslySetInnerHTML={{ __html: paragraphText.replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold text-gray-900">$1</strong>').replace(/\*(.*?)\*/g, '<em>$1</em>') }} />
-            </p>
-          );
-          paragraphText = '';
-        }
-        const bulletText = trimmedLine.substring(1).trim();
-        currentList.push(bulletText);
-      } else if (trimmedLine === '') {
+      // Handle section headers (lines ending with : or lines that are all caps)
+      if (trimmedLine.endsWith(':') && trimmedLine.length < 100 && !trimmedLine.startsWith('-')) {
+        // Flush any pending content
         if (currentList.length > 0) {
           elements.push(
-            <ul key={`ul-${index}`} className="mb-4 space-y-2">
-              {currentList.map((item, i) => (
-                <li key={i} className="flex items-start">
-                  <span className="text-indigo-600 mr-2">•</span>
-                  <span className="text-gray-700" dangerouslySetInnerHTML={{ __html: item.replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold text-gray-900">$1</strong>').replace(/\*(.*?)\*/g, '<em>$1</em>') }} />
-                </li>
-              ))}
-            </ul>
+            <div key={`ul-${index}`} className="mb-6 bg-indigo-50 rounded-lg p-4 border-l-4 border-indigo-600">
+              <ul className="space-y-2.5">
+                {currentList.map((item, i) => (
+                  <li key={i} className="flex items-start">
+                    <span className="inline-block w-2 h-2 bg-indigo-600 rounded-full mt-2 mr-3 flex-shrink-0"></span>
+                    <span className="text-gray-800 leading-relaxed flex-1" dangerouslySetInnerHTML={{ __html: formatText(item) }} />
+                  </li>
+                ))}
+              </ul>
+            </div>
           );
           currentList = [];
         }
         if (paragraphText) {
           elements.push(
-            <p key={`p-${index}`} className="mb-4 text-gray-700 leading-relaxed">
-              <span dangerouslySetInnerHTML={{ __html: paragraphText.replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold text-gray-900">$1</strong>').replace(/\*(.*?)\*/g, '<em>$1</em>') }} />
+            <p key={`p-${index}`} className="mb-4 text-gray-800 leading-relaxed text-base">
+              <span dangerouslySetInnerHTML={{ __html: formatText(paragraphText) }} />
             </p>
           );
           paragraphText = '';
         }
-      } else {
+        
+        elements.push(
+          <h3 key={`h-${index}`} className="text-lg font-bold text-gray-900 mb-3 mt-6 flex items-center">
+            <span className="w-1.5 h-6 bg-indigo-600 rounded-full mr-3"></span>
+            {trimmedLine}
+          </h3>
+        );
+      }
+      // Handle bullet points
+      else if (trimmedLine.startsWith('-') || trimmedLine.startsWith('•') || trimmedLine.startsWith('*')) {
+        if (paragraphText) {
+          elements.push(
+            <p key={`p-${index}`} className="mb-4 text-gray-800 leading-relaxed text-base">
+              <span dangerouslySetInnerHTML={{ __html: formatText(paragraphText) }} />
+            </p>
+          );
+          paragraphText = '';
+        }
+        const bulletText = trimmedLine.substring(1).trim();
+        if (bulletText) {
+          currentList.push(bulletText);
+        }
+      } 
+      // Handle empty lines
+      else if (trimmedLine === '') {
         if (currentList.length > 0) {
           elements.push(
-            <ul key={`ul-${index}`} className="mb-4 space-y-2">
-              {currentList.map((item, i) => (
-                <li key={i} className="flex items-start">
-                  <span className="text-indigo-600 mr-2">•</span>
-                  <span className="text-gray-700" dangerouslySetInnerHTML={{ __html: item.replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold text-gray-900">$1</strong>').replace(/\*(.*?)\*/g, '<em>$1</em>') }} />
-                </li>
-              ))}
-            </ul>
+            <div key={`ul-${index}`} className="mb-6 bg-indigo-50 rounded-lg p-4 border-l-4 border-indigo-600">
+              <ul className="space-y-2.5">
+                {currentList.map((item, i) => (
+                  <li key={i} className="flex items-start">
+                    <span className="inline-block w-2 h-2 bg-indigo-600 rounded-full mt-2 mr-3 flex-shrink-0"></span>
+                    <span className="text-gray-800 leading-relaxed flex-1" dangerouslySetInnerHTML={{ __html: formatText(item) }} />
+                  </li>
+                ))}
+              </ul>
+            </div>
+          );
+          currentList = [];
+        }
+        if (paragraphText) {
+          elements.push(
+            <p key={`p-${index}`} className="mb-4 text-gray-800 leading-relaxed text-base">
+              <span dangerouslySetInnerHTML={{ __html: formatText(paragraphText) }} />
+            </p>
+          );
+          paragraphText = '';
+        }
+      } 
+      // Regular text lines
+      else {
+        if (currentList.length > 0) {
+          elements.push(
+            <div key={`ul-${index}`} className="mb-6 bg-indigo-50 rounded-lg p-4 border-l-4 border-indigo-600">
+              <ul className="space-y-2.5">
+                {currentList.map((item, i) => (
+                  <li key={i} className="flex items-start">
+                    <span className="inline-block w-2 h-2 bg-indigo-600 rounded-full mt-2 mr-3 flex-shrink-0"></span>
+                    <span className="text-gray-800 leading-relaxed flex-1" dangerouslySetInnerHTML={{ __html: formatText(item) }} />
+                  </li>
+                ))}
+              </ul>
+            </div>
           );
           currentList = [];
         }
@@ -110,27 +165,30 @@ export const PublicResultsPage = () => {
       }
     });
 
+    // Flush remaining content
     if (currentList.length > 0) {
       elements.push(
-        <ul key="ul-final" className="mb-4 space-y-2">
-          {currentList.map((item, i) => (
-            <li key={i} className="flex items-start">
-              <span className="text-indigo-600 mr-2">•</span>
-              <span className="text-gray-700" dangerouslySetInnerHTML={{ __html: item.replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold text-gray-900">$1</strong>').replace(/\*(.*?)\*/g, '<em>$1</em>') }} />
-            </li>
-          ))}
-        </ul>
+        <div key="ul-final" className="mb-6 bg-indigo-50 rounded-lg p-4 border-l-4 border-indigo-600">
+          <ul className="space-y-2.5">
+            {currentList.map((item, i) => (
+              <li key={i} className="flex items-start">
+                <span className="inline-block w-2 h-2 bg-indigo-600 rounded-full mt-2 mr-3 flex-shrink-0"></span>
+                <span className="text-gray-800 leading-relaxed flex-1" dangerouslySetInnerHTML={{ __html: formatText(item) }} />
+              </li>
+            ))}
+          </ul>
+        </div>
       );
     }
     if (paragraphText) {
       elements.push(
-        <p key="p-final" className="mb-4 text-gray-700 leading-relaxed">
-          <span dangerouslySetInnerHTML={{ __html: paragraphText.replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold text-gray-900">$1</strong>').replace(/\*(.*?)\*/g, '<em>$1</em>') }} />
+        <p key="p-final" className="mb-4 text-gray-800 leading-relaxed text-base">
+          <span dangerouslySetInnerHTML={{ __html: formatText(paragraphText) }} />
         </p>
       );
     }
 
-    return <div className="space-y-4">{elements}</div>;
+    return <div className="space-y-3">{elements}</div>;
   };
 
   if (loading) {
@@ -329,15 +387,23 @@ export const PublicResultsPage = () => {
           <div className="space-y-6">
             {question_results.map((result, index) => (
               <div key={index} className="border-l-4 border-indigo-600 pl-3 sm:pl-4 py-2">
-                <div className="flex flex-col sm:flex-row items-start sm:justify-between gap-2 mb-2">
+                <div className="flex items-start justify-between gap-2 mb-2">
                   <h3 className="text-base sm:text-lg font-semibold text-gray-900 flex-1">{result.question_text}</h3>
-                  <span className={`px-3 py-1 rounded-full text-xs sm:text-sm font-medium flex-shrink-0 ${
-                    result.classification === 'yes'
-                      ? 'bg-green-100 text-green-800'
-                      : 'bg-red-100 text-red-800'
-                  }`}>
-                    {result.user_answer}
-                  </span>
+                  
+                  {/* Answer badge and Info button grouped together on the right */}
+                  <div className="flex items-start gap-2 flex-shrink-0">
+                    <span className={`px-3 py-1 rounded-full text-xs sm:text-sm font-medium ${
+                      result.classification === 'yes'
+                        ? 'bg-green-100 text-green-800'
+                        : 'bg-red-100 text-red-800'
+                    }`}>
+                      {result.user_answer}
+                    </span>
+                    <QuestionInfoButton 
+                      description={result.description || ''} 
+                      docUrl={result.doc_url || ''} 
+                    />
+                  </div>
                 </div>
                 <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs sm:text-sm text-gray-600 mb-2">
                   <span className="font-medium">{result.pillar_name}</span>
@@ -385,7 +451,7 @@ export const PublicResultsPage = () => {
             <Mail className="w-10 sm:w-12 h-10 sm:h-12 mx-auto mb-4" />
             <h3 className="text-xl sm:text-2xl font-bold mb-2">Want Your Own Assessment?</h3>
             <p className="text-sm sm:text-base text-indigo-100 mb-6">
-              Get a comprehensive DevSecOps assessment for your repository
+              Get a comprehensive DevSecOps maturity assessment for your repository
             </p>
             <button
               onClick={() => navigate('/')}

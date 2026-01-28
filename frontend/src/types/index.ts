@@ -1,4 +1,4 @@
-// TypeScript type definitions for DevSecOps Assessment
+// TypeScript type definitions for DevSecOps Maturity Assessment
 
 export const RepositoryTool = {
   GITHUB: 'github',

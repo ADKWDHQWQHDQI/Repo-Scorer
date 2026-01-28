@@ -1,11 +1,13 @@
 """
 FastAPI Backend for DevSecOps Maturity Assessment
 Exposes Python orchestrator as REST API for React frontend
+Serves React static files at root path
 """
 
 from fastapi import FastAPI, HTTPException, Depends, Query
+from fastapi.responses import JSONResponse, FileResponse
+from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
 from pydantic import BaseModel, EmailStr, field_validator
 from typing import Dict, Optional
 from contextlib import asynccontextmanager
@@ -17,6 +19,8 @@ from datetime import datetime, timedelta
 from threading import Lock
 import base64
 import urllib.parse
+import os
+from pathlib import Path
 
 # Import modules (now in backend root)
 from orchestrator import AssessmentOrchestrator
@@ -31,20 +35,25 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    """Lifespan event handler for startup and shutdown"""
-    # Startup
+def init_db_background():
+    """Initialize database in background - non-blocking"""
     try:
         init_db()
         logger.info("✅ Database initialized successfully")
     except Exception as e:
         logger.error(f"❌ Database initialization failed: {e}")
         logger.warning("⚠️  App will continue running, but database features may not work")
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Lifespan event handler for startup and shutdown"""
+    # Startup - run DB init in background to avoid blocking probes
+    asyncio.create_task(asyncio.to_thread(init_db_background))
     
     # Start background cleanup task
     asyncio.create_task(periodic_cleanup_task())
-    logger.info("Application startup complete")
+    logger.info("✅ Application startup complete - background init running")
     
     yield
     
@@ -61,18 +70,16 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-# CORS middleware - Allow frontend to access backend
+# Configure CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "https://agreeable-moss-04d8d490f.4.azurestaticapps.net",
-        "https://green-wave-03cc57a0f.1.azurestaticapps.net",
-        "https://green-wave-03cc57a0f-preview.eastus2.1.azurestaticapps.net",
-        "https://red-pebble-019922c00.6.azurestaticapps.net",
-        "http://localhost:5173",  # Local development
-        "http://localhost:3000"   # Alternative local port
+        "http://localhost:5173",  # Vite dev server
+        "http://localhost:8000",  # Backend serving frontend
+        "http://127.0.0.1:5173",
+        "http://127.0.0.1:8000"
     ],
-    allow_credentials=False,
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -228,19 +235,15 @@ async def periodic_cleanup_task():
         cleanup_task_running = False
 
 
-@app.get("/")
-async def root():
-    """Root endpoint"""
-    return {
-        "name": "DevSecOps Maturity Assessment API",
-        "version": "1.0.0",
-        "status": "running"
-    }
+@app.get("/healthz")
+async def healthz():
+    """Fast health check for Azure App Service probes - no dependencies"""
+    return {"status": "ok"}
 
 
 @app.get("/api/health", response_model=HealthCheckResponse)
 async def health_check():
-    """Check if Azure OpenAI service is accessible"""
+    """Detailed health check - checks Azure OpenAI service accessibility"""
     try:
         # Create a temporary orchestrator to check health
         temp_orchestrator = AssessmentOrchestrator(RepositoryTool.GITHUB)
@@ -357,6 +360,7 @@ async def options_email_save():
 async def save_email(request: SaveEmailRequest, db: Session = Depends(get_db)):
     """Save user email to database with platform selections"""
     try:
+        print(f"Received email save request: {request.email}")  # Debug log
         # Check if email already exists
         existing_email = db.query(UserEmail).filter(UserEmail.email == request.email).first()
         
@@ -371,11 +375,13 @@ async def save_email(request: SaveEmailRequest, db: Session = Depends(get_db)):
             
             db.commit()
             
-            return SaveEmailResponse(
+            response = SaveEmailResponse(
                 success=True,
                 message="Email updated successfully",
                 email=request.email
             )
+            print(f"Returning response: {response.model_dump()}")  # Debug log
+            return response
         
         # Create new email record
         new_email = UserEmail(
@@ -389,11 +395,13 @@ async def save_email(request: SaveEmailRequest, db: Session = Depends(get_db)):
         db.commit()
         db.refresh(new_email)
         
-        return SaveEmailResponse(
+        response = SaveEmailResponse(
             success=True,
             message="Email saved successfully",
             email=request.email
         )
+        print(f"Returning response: {response.model_dump()}")  # Debug log
+        return response
         
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -626,7 +634,9 @@ async def complete_assessment(request: CompleteAssessmentRequest, db: Session = 
                     "max_score": question_obj.max_score,
                     "analysis": answer_data.get("analysis", ""),
                     "pillar_id": question_pillar_id,
-                    "pillar_name": question_pillar_name
+                    "pillar_name": question_pillar_name,
+                    "description": question_obj.description,
+                    "doc_url": question_obj.doc_url
                 })
         
         # Calculate final score
@@ -692,7 +702,57 @@ async def complete_assessment(request: CompleteAssessmentRequest, db: Session = 
         raise HTTPException(status_code=500, detail=str(e))
 
 
-# For local development only - Azure App Service will use uvicorn directly
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+# Mount static files for React frontend from wwwroot folder
+# Try multiple paths for compatibility
+wwwroot_dir = Path(__file__).parent / "wwwroot"
+if not wwwroot_dir.exists():
+    # Fallback for Azure App Service
+    wwwroot_dir = Path("/home/site/wwwroot")
+if not wwwroot_dir.exists():
+    # Fallback for current working directory
+    wwwroot_dir = Path(os.getcwd()) / "backend" / "wwwroot"
+
+logger.info(f"WWWRoot directory: {wwwroot_dir}, exists: {wwwroot_dir.exists()}")
+
+# Serve frontend static files from wwwroot
+if wwwroot_dir.exists():
+    # Mount assets folder for JS/CSS files with proper caching headers
+    assets_dir = wwwroot_dir / "assets"
+    if assets_dir.exists():
+        app.mount("/assets", StaticFiles(directory=str(assets_dir)), name="assets")
+        logger.info(f"Mounted /assets from {assets_dir}")
+    
+    # Serve index.html at root
+    @app.get("/")
+    async def serve_root():
+        """Serve the React app's index.html at root path"""
+        index_file = wwwroot_dir / "index.html"
+        if index_file.exists():
+            return FileResponse(str(index_file), media_type="text/html")
+        raise HTTPException(status_code=404, detail="Frontend not found - please build the React app first")
+    
+    # Serve index.html for all non-API routes (SPA routing)
+    # This must be the LAST route defined
+    @app.get("/{full_path:path}")
+    async def serve_frontend(full_path: str):
+        """Catch-all route to serve React app for client-side routing"""
+        # Don't intercept API routes
+        if full_path.startswith("api/"):
+            raise HTTPException(status_code=404, detail="API endpoint not found")
+        
+        # Don't intercept assets
+        if full_path.startswith("assets/"):
+            raise HTTPException(status_code=404, detail="Asset not found")
+        
+        # Don't intercept docs
+        if full_path.startswith("docs") or full_path.startswith("redoc") or full_path.startswith("openapi.json"):
+            raise HTTPException(status_code=404, detail="Not found")
+        
+        # Serve index.html for all other routes (React Router handles client-side routing)
+        index_file = wwwroot_dir / "index.html"
+        if index_file.exists():
+            return FileResponse(str(index_file), media_type="text/html")
+        raise HTTPException(status_code=404, detail="Frontend not found - please build the React app first")
+else:
+    logger.warning(f"WWWRoot directory not found at {wwwroot_dir}. Static files will not be served. Run 'npm run build:prod' in frontend folder.")
+

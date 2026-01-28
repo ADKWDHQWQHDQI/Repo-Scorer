@@ -12,13 +12,13 @@ export function Header({ onMenuClick }: HeaderProps) {
   const getTitle = () => {
     switch (location.pathname) {
       case '/':
-        return 'Welcome'
+        return 'DevSecOps Maturity Assessment'
       case '/assessment':
         return 'Assessment in Progress'
       case '/results':
         return 'Assessment Results'
       default:
-        return 'DevSecOps Assessment'
+        return 'AI-powered assessment'
     }
   }
 
@@ -41,7 +41,7 @@ export function Header({ onMenuClick }: HeaderProps) {
           </div>
           <div className="min-w-0">
             <h1 className="text-lg font-semibold text-gray-900 truncate">{getTitle()}</h1>
-            <p className="text-xs text-gray-500 truncate">DevSecOps Assessment</p>
+            <p className="text-xs text-gray-500 truncate">AI-Powered Assessment</p>
           </div>
         </div>
         {location.pathname === '/' && (

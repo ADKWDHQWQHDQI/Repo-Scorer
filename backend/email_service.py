@@ -253,7 +253,7 @@ class EmailService:
                     <!-- Footer -->
                     <tr>
                         <td align="center" style="padding: 20px; background-color: #f3f4f6;">
-                            <p style="margin: 5px 0; padding: 0; color: #9ca3af; font-size: 12px; font-family: Arial, sans-serif;">Repository Scorer - DevSecOps Assessment Platform</p>
+                            <p style="margin: 5px 0; padding: 0; color: #9ca3af; font-size: 12px; font-family: Arial, sans-serif;">Repository Scorer - DevSecOps Maturity Assessment Platform</p>
                             <p style="margin: 5px 0; padding: 0; color: #9ca3af; font-size: 12px; font-family: Arial, sans-serif;">You can share this report with your team using the link above</p>
                         </td>
                     </tr>
@@ -329,7 +329,7 @@ View your full report here:
 This link will expire in 48 hours.
 
 ---
-Repository Scorer - DevSecOps Assessment Platform
+Repository Scorer - DevSecOps Maturity Assessment Platform
             """
             
             # Attach both parts
